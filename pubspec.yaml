@@ -43,6 +43,7 @@ dependencies:
 #  geolocator: ^10.0.1
   intl: ^0.18.0
   flex_color_scheme: ^8.2.0
+  flutter_launcher_icons: ^0.14.3
 
 dev_dependencies:
   flutter_test:
