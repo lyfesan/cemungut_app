@@ -106,6 +106,7 @@ class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
 
   bool _isLoading = false;
+  bool _isPasswordObscured = true;
   String? _errorMessage;
 
   Future<void> _signIn() async {
@@ -179,12 +180,22 @@ class _LoginFormState extends State<_LoginForm> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _passwordController,
-            obscureText: true,
+            obscureText: _isPasswordObscured,
             decoration: InputDecoration(
               hintText: 'Password',
               prefixIcon: const Icon(Icons.lock_outline),
-              border:
-              OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () {
+                  // Toggle the state
+                  setState(() {
+                    _isPasswordObscured = !_isPasswordObscured;
+                  });
+                },
+              ),
             ),
             validator: (value) =>
             value!.isEmpty ? 'Password tidak boleh kosong' : null,

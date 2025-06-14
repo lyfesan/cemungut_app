@@ -65,4 +65,27 @@ class FirestoreService {
       return null;
     }
   }
+
+  static Future<void> updateUserData({
+    required String id,
+    required String name,
+    required String phoneNumber,
+  }) async {
+    try {
+      await _usersCollection.doc(id).update({
+        'name': name,
+        'phoneNumber': phoneNumber,
+        'updatedAt': Timestamp.now(), // Always update the timestamp
+      });
+
+      if (kDebugMode) {
+        print('Firestore user document updated successfully for user ID: $id');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating Firestore user document: $e');
+      }
+      rethrow;
+    }
+  }
 }

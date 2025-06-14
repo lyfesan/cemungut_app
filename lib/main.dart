@@ -1,12 +1,9 @@
 import 'package:cemungut_app/presentation/screens/auth/auth_gate.dart';
-import 'package:cemungut_app/presentation/screens/auth/login_screen.dart';
-import 'package:cemungut_app/presentation/screens/home_screen.dart';
 import 'package:cemungut_app/presentation/screens/navigation_menu.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:cemungut_app/app/themes/theme.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 import 'firebase_options.dart';
 
