@@ -89,6 +89,7 @@ class _RegisterFormState extends State<_RegisterForm> {
   final _formKey = GlobalKey<FormState>();
 
   bool _isLoading = false;
+  bool _isPasswordObscured = true;
   String? _errorMessage;
 
   Future<void> _signUp() async {
@@ -201,12 +202,22 @@ class _RegisterFormState extends State<_RegisterForm> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _passwordController,
-            obscureText: true,
+            obscureText: _isPasswordObscured,
             decoration: InputDecoration(
               hintText: 'Password',
               prefixIcon: const Icon(Icons.lock_outline),
-              border:
-              OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () {
+                  // Toggle the state
+                  setState(() {
+                    _isPasswordObscured = !_isPasswordObscured;
+                  });
+                },
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
