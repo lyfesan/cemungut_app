@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../core/theme.dart';
-import 'login_screen.dart';
+import 'package:cemungut_app/app/themes/theme.dart';
+import 'auth/login_screen.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -14,7 +14,7 @@ class SplashScreen extends StatelessWidget {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.dark.primaryColor,
+      backgroundColor: AppTheme.dark.primaryColor,
       body: Center(
         child: Text('Cemungut', style: TextStyle(color: Colors.white, fontSize: 32)),
       ),
