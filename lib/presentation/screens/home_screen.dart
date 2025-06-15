@@ -6,6 +6,7 @@ import '../../app/models/app_user.dart';
 import '../../app/services/firebase_auth_service.dart';
 import '../../app/services/firestore_service.dart';
 import 'bank_sampah/bank_sampah_screen.dart';
+import 'package:cemungut_app/presentation/screens/order_pickup/waste_cart_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -167,7 +168,12 @@ class _HomeScreenState extends State<HomeScreen> {
       color: Theme.of(context).primaryColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const WasteCartScreen()),
+          );
+        },
         borderRadius: BorderRadius.circular(16),
         child: const Padding(
           padding: EdgeInsets.symmetric(vertical: 32.0),
