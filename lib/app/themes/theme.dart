@@ -42,6 +42,8 @@ abstract final class AppTheme {
     ),
     // ColorScheme seed generation configuration for light mode.
     keyColors: const FlexKeyColors(
+      useSecondary: true,
+      useTertiary: true,
     ),
     // Direct ThemeData properties.
     visualDensity: FlexColorScheme.comfortablePlatformDensity,
@@ -78,6 +80,8 @@ abstract final class AppTheme {
     ),
     // ColorScheme seed configuration setup for dark mode.
     keyColors: const FlexKeyColors(
+      useSecondary: true,
+      useTertiary: true,
     ),
     // Direct ThemeData properties.
     visualDensity: FlexColorScheme.comfortablePlatformDensity,
