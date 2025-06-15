@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'home_screen.dart';
+import 'reward/reward_screen.dart';
+
 
 class NavigationMenu extends StatelessWidget {
   NavigationMenu({super.key});
@@ -8,7 +10,7 @@ class NavigationMenu extends StatelessWidget {
 
   final List<Widget> screens = const [
     HomeScreen(),
-    Center(child: Text('Hadiah')),
+    RewardScreen(),
     Center(child: Text('Transaksi')),
   ];
 
