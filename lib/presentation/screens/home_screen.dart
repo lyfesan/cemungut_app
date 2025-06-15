@@ -5,6 +5,7 @@ import 'package:cemungut_app/presentation/screens/navigation_menu.dart'; // Adju
 import '../../app/models/app_user.dart';
 import '../../app/services/firebase_auth_service.dart';
 import '../../app/services/firestore_service.dart';
+import 'bank_sampah/bank_sampah_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -190,27 +191,40 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       children: [
         _buildShortcutCard(context,
-            icon: Icons.document_scanner_outlined, label: 'Deteksi Sampah'),
+            icon: Icons.document_scanner_outlined,
+            label: 'Deteksi Sampah',
+            onTap: () {  }
+        ),
         const SizedBox(width: 12),
         _buildShortcutCard(context,
-            icon: Icons.school_outlined, label: 'Edukasi Sampah'),
+            icon: Icons.school_outlined, label: 'Edukasi Sampah',
+            onTap: () {  }
+        ),
         const SizedBox(width: 12),
-        _buildShortcutCard(context,
+        _buildShortcutCard(
+            context,
             icon: Icons.store_mall_directory_outlined,
-            label: 'Lokasi Bank Sampah'),
+            label: 'Lokasi Bank Sampah',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const BankSampahScreen()),
+              );
+            }
+        ),
       ],
     );
   }
 
   Widget _buildShortcutCard(BuildContext context,
-      {required IconData icon, required String label}) {
+      {required IconData icon, required String label, required VoidCallback onTap}) {
     return Expanded(
       child: Card(
         elevation: 2,
         shadowColor: Colors.black12,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
-          onTap: () {},
+          onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),

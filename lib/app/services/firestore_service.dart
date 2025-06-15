@@ -2,12 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cemungut_app/app/models/app_user.dart'; // Make sure this path is correct
 import 'package:flutter/foundation.dart';
 
+import '../models/bank_sampah.dart';
+
 class FirestoreService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // The collection reference for the 'users' collection
   static final CollectionReference<Map<String, dynamic>> _usersCollection =
   _firestore.collection('users');
+
+  static final CollectionReference<Map<String, dynamic>> _wasteBanksCollection =
+  _firestore.collection('wasteBanks'); // Assuming this is your collection name
 
   /// Creates a new user document in Firestore.
   ///
@@ -86,6 +91,19 @@ class FirestoreService {
         print('Error updating Firestore user document: $e');
       }
       rethrow;
+    }
+  }
+
+  static Future<List<BankSampah>> getWasteBanks() async {
+    try {
+      final snapshot = await _wasteBanksCollection.get();
+      // Convert each document into a BankSampah object
+      return snapshot.docs.map((doc) => BankSampah.fromFirestore(doc)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching waste banks: $e');
+      }
+      return []; // Return an empty list on error
     }
   }
 }
