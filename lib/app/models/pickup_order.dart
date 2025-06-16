@@ -21,6 +21,7 @@ class PickupOrder {
   final Timestamp pickupTime;
   final PickupStatus status;
   final int estimatedPoints;
+  final String? orderNote;
   final Timestamp createdAt;
   final Timestamp updatedAt;
 
@@ -33,6 +34,7 @@ class PickupOrder {
     required this.pickupTime,
     required this.status,
     required this.estimatedPoints,
+    this.orderNote,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -49,6 +51,7 @@ class PickupOrder {
       'pickupTime': pickupTime,
       'status': status.name, // Simpan status sebagai String
       'estimatedPoints': estimatedPoints,
+      'orderNote': orderNote,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
@@ -79,6 +82,7 @@ class PickupOrder {
         orElse: () => PickupStatus.pending,
       ),
       estimatedPoints: data['estimatedPoints'] ?? 0,
+      orderNote: data['orderNote'],
       createdAt: data['createdAt'] ?? Timestamp.now(),
       updatedAt: data['updatedAt'] ?? Timestamp.now(),
     );

@@ -8,6 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:cemungut_app/app/models/waste_item.dart';
 import 'package:cemungut_app/app/services/firebase_auth_service.dart'; // Asumsi Anda punya service ini
 import 'package:cemungut_app/app/models/app_user.dart'; // Untuk mendapatkan data user
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
 
 class PickupConfirmationScreen extends StatefulWidget {
   final List<WasteItem> wasteItems;
@@ -19,9 +22,15 @@ class PickupConfirmationScreen extends StatefulWidget {
 }
 
 class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
-  String _selectedDay = 'Hari Ini';
-  String _selectedTime = 'Sekarang';
-  bool _isLoading = false; // Untuk menampilkan loading indicator
+  final _notesController = TextEditingController();
+  DateTime? _selectedPickupDateTime;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
 
   // Fungsi untuk meringkas item sampah
   Map<WasteCategory, int> _getWasteSummary() {
@@ -35,8 +44,63 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
     return summary;
   }
 
+  // --- FUNGSI PICKER BARU ---
+  Future<void> _selectDate() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedPickupDateTime ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
+    );
+
+    if (pickedDate != null) {
+      // Jika waktu belum dipilih, default ke jam sekarang
+      final currentTime = TimeOfDay.fromDateTime(
+          _selectedPickupDateTime ?? DateTime.now());
+      setState(() {
+        _selectedPickupDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          currentTime.hour,
+          currentTime.minute,
+        );
+      });
+    }
+  }
+
+  Future<void> _selectTime() async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_selectedPickupDateTime ?? DateTime.now()),
+    );
+
+    if (pickedTime != null) {
+      // Jika tanggal belum dipilih, default ke hari ini
+      final currentDate = _selectedPickupDateTime ?? DateTime.now();
+      setState(() {
+        _selectedPickupDateTime = DateTime(
+          currentDate.year,
+          currentDate.month,
+          currentDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+      });
+    }
+  }
+
   Future<void> _processOrder() async {
+
+    if (_selectedPickupDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Silakan pilih waktu penjemputan.')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
+
 
     // 1. Dapatkan user yang sedang login
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -58,33 +122,28 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
 
 
     try {
-      // 3. Siapkan data untuk PickupOrder
-      final now = DateTime.now();
-      final pickupDateTime = _calculatePickupTime();
-      final totalItems = widget.wasteItems.fold<int>(0, (sum, item) => sum + item.quantity);
-      final totalPoints = totalItems * 25; // Asumsi poin
+      final totalItems =
+      widget.wasteItems.fold<int>(0, (sum, item) => sum + item.quantity);
+      final totalPoints = totalItems * 25;
+      final orderId =
+          FirebaseFirestore.instance.collection('pickupOrders').doc().id;
 
-      // Buat ID unik untuk dokumen baru
-      final orderId = FirebaseFirestore.instance.collection('pickupOrders').doc().id;
-
-      // 4. Buat objek PickupOrder
       final newOrder = PickupOrder(
         id: orderId,
         userId: currentUser.uid,
-        userName: appUser.name, // Ambil nama dari AppUser
-        address: "Rumah Tung Tung Sahur", // Ganti dengan alamat user, misal: appUser.address
+        userName: appUser.name,
+        address: "Rumah Tung Tung Sahur", // Ganti dengan data alamat dari appUser
         items: widget.wasteItems,
-        pickupTime: Timestamp.fromDate(pickupDateTime),
+        pickupTime: Timestamp.fromDate(_selectedPickupDateTime!), // <-- GUNAKAN STATE BARU
         status: PickupStatus.pending,
         estimatedPoints: totalPoints,
+        orderNote: _notesController.text, // <-- TAMBAHKAN CATATAN DARI CONTROLLER
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       );
 
-      // 5. Simpan ke Firestore
       await FirestoreService.createPickupOrder(newOrder);
 
-      // 6. Tampilkan notifikasi sukses dan kembali
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Permintaan penjemputan berhasil dibuat!')),
       );
@@ -99,28 +158,13 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
     }
   }
 
-  DateTime _calculatePickupTime() {
-    // Logika sederhana untuk menentukan waktu jemput
-    var pickupDate = DateTime.now();
-    if (_selectedDay == 'Besok') {
-      pickupDate = pickupDate.add(const Duration(days: 1));
-    }
 
-    if (_selectedTime != 'Sekarang') {
-      final timeParts = _selectedTime.split(':');
-      final hour = int.parse(timeParts[0]);
-      final minute = int.parse(timeParts[1].substring(0,2));
-      return DateTime(pickupDate.year, pickupDate.month, pickupDate.day, hour, minute);
-    }
-
-    return DateTime.now(); // Jika 'Sekarang'
-  }
 
   @override
   Widget build(BuildContext context) {
     final summary = _getWasteSummary();
     final totalItems = summary.values.reduce((a, b) => a + b);
-    final totalPoints = totalItems * 25; // Asumsi 1 item = 25 poin
+    final totalPoints = totalItems * 25;
 
     return Scaffold(
       appBar: AppBar(
@@ -132,74 +176,69 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Lokasi
             Card(
               child: ListTile(
                 leading: const Icon(Icons.location_on, color: Color(0xFF1E824C)),
                 title: const Text('Lokasi Penjemputan'),
-                subtitle: const Text('Rumah Tung Tung Sahur'), // Ganti dengan data user
-                trailing: TextButton(onPressed: () {}, child: const Text('Ubah alamat')),
+                subtitle: const Text('Rumah Tung Tung Sahur'),
+                trailing:
+                TextButton(onPressed: () {}, child: const Text('Ubah')),
               ),
             ),
             const SizedBox(height: 16),
 
-            // Waktu Jemput
+            // --- WAKTU JEMPUT (UI BARU) ---
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Waktu Jemput', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ChoiceChip(
-                            label: const Text('Hari Ini'),
-                            selected: _selectedDay == 'Hari Ini',
-                            onSelected: (selected) {
-                              setState(() => _selectedDay = 'Hari Ini');
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ChoiceChip(
-                            label: const Text('Besok'),
-                            selected: _selectedDay == 'Besok',
-                            onSelected: (selected) {
-                              setState(() => _selectedDay = 'Besok');
-                            },
-                          ),
-                        ),
-                      ],
+                    const Text('Waktu Jemput',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 8),
+                    // Tombol Pilih Tanggal
+                    ListTile(
+                      leading: const Icon(Icons.calendar_today, color: Colors.grey),
+                      title: Text(_selectedPickupDateTime == null
+                          ? 'Pilih Tanggal'
+                          : DateFormat('EEEE, d MMMM y', 'id_ID').format(_selectedPickupDateTime!)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _selectDate,
                     ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ChoiceChip(
-                            label: const Text('Sekarang'),
-                            selected: _selectedTime == 'Sekarang',
-                            onSelected: (selected) {
-                              setState(() => _selectedTime = 'Sekarang');
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ChoiceChip(
-                            label: const Text('09:00-10:00'),
-                            selected: _selectedTime == '09:00-10:00',
-                            onSelected: (selected) {
-                              setState(() => _selectedTime = '09:00-10:00');
-                            },
-                          ),
-                        ),
-                      ],
+                    const Divider(),
+                    // Tombol Pilih Waktu
+                    ListTile(
+                      leading: const Icon(Icons.access_time, color: Colors.grey),
+                      title: Text(_selectedPickupDateTime == null
+                          ? 'Pilih Waktu'
+                          : DateFormat('HH:mm').format(_selectedPickupDateTime!)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _selectTime,
                     ),
                   ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // --- CATATAN (UI BARU) ---
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  controller: _notesController,
+                  decoration: const InputDecoration(
+                    labelText: 'Catatan untuk Pengemudi (Opsional)',
+                    hintText: 'Contoh: Titip di pos satpam, atau pagar warna hijau.',
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.note_alt_outlined),
+                  ),
+                  maxLines: 3,
                 ),
               ),
             ),
@@ -212,9 +251,12 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Jenis Sampah', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const Text('Rincian Sampah',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
                     const Divider(),
                     ...summary.entries.map((entry) {
+                      if (entry.value == 0) return const SizedBox.shrink(); // Jangan tampilkan jika jumlahnya 0
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4.0),
                         child: Row(
@@ -230,8 +272,11 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                        Text('$totalItems', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const Text('Total',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text('$totalItems',
+                            style:
+                            const TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -241,9 +286,13 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
                         const Text('Estimasi Poin'),
                         Row(
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 16),
+                            const Icon(Icons.star,
+                                color: Colors.amber, size: 16),
                             const SizedBox(width: 4),
-                            Text('$totalPoints', style: const TextStyle(color: Color(0xFF1E824C), fontWeight: FontWeight.bold)),
+                            Text('$totalPoints',
+                                style: const TextStyle(
+                                    color: Color(0xFF1E824C),
+                                    fontWeight: FontWeight.bold)),
                           ],
                         )
                       ],
@@ -260,13 +309,15 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : ElevatedButton.icon(
-          onPressed: _processOrder, // Panggil fungsi _processOrder
-          icon: const Text('Pesan', style: TextStyle(color: Colors.white, fontSize: 18)),
+          onPressed: _processOrder,
+          icon: const Text('Pesan',
+              style: TextStyle(color: Colors.white, fontSize: 18)),
           label: const Icon(Icons.arrow_forward, color: Colors.white),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF1E824C),
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
           ),
         ),
       ),
