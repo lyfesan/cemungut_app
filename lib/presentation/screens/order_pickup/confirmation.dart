@@ -1,7 +1,13 @@
 // lib/app/presentation/screens/pickup/pickup_confirmation_screen.dart
 
+import 'package:cemungut_app/app/models/pickup_order.dart';
+import 'package:cemungut_app/app/services/firestore_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:cemungut_app/app/models/waste_item.dart'; // Ganti dengan path yang benar
+import 'package:cemungut_app/app/models/waste_item.dart';
+import 'package:cemungut_app/app/services/firebase_auth_service.dart'; // Asumsi Anda punya service ini
+import 'package:cemungut_app/app/models/app_user.dart'; // Untuk mendapatkan data user
 
 class PickupConfirmationScreen extends StatefulWidget {
   final List<WasteItem> wasteItems;
@@ -15,6 +21,7 @@ class PickupConfirmationScreen extends StatefulWidget {
 class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
   String _selectedDay = 'Hari Ini';
   String _selectedTime = 'Sekarang';
+  bool _isLoading = false; // Untuk menampilkan loading indicator
 
   // Fungsi untuk meringkas item sampah
   Map<WasteCategory, int> _getWasteSummary() {
@@ -26,6 +33,87 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
       summary[item.category] = (summary[item.category] ?? 0) + item.quantity;
     }
     return summary;
+  }
+
+  Future<void> _processOrder() async {
+    setState(() => _isLoading = true);
+
+    // 1. Dapatkan user yang sedang login
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Anda harus login untuk memesan.')));
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    // 2. Dapatkan detail data user dari Firestore
+    final appUser = await FirestoreService.getAppUser(currentUser.uid);
+    if (appUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal mendapatkan data pengguna.')));
+      setState(() => _isLoading = false);
+      return;
+    }
+
+
+    try {
+      // 3. Siapkan data untuk PickupOrder
+      final now = DateTime.now();
+      final pickupDateTime = _calculatePickupTime();
+      final totalItems = widget.wasteItems.fold<int>(0, (sum, item) => sum + item.quantity);
+      final totalPoints = totalItems * 25; // Asumsi poin
+
+      // Buat ID unik untuk dokumen baru
+      final orderId = FirebaseFirestore.instance.collection('pickupOrders').doc().id;
+
+      // 4. Buat objek PickupOrder
+      final newOrder = PickupOrder(
+        id: orderId,
+        userId: currentUser.uid,
+        userName: appUser.name, // Ambil nama dari AppUser
+        address: "Rumah Tung Tung Sahur", // Ganti dengan alamat user, misal: appUser.address
+        items: widget.wasteItems,
+        pickupTime: Timestamp.fromDate(pickupDateTime),
+        status: PickupStatus.pending,
+        estimatedPoints: totalPoints,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      );
+
+      // 5. Simpan ke Firestore
+      await FirestoreService.createPickupOrder(newOrder);
+
+      // 6. Tampilkan notifikasi sukses dan kembali
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Permintaan penjemputan berhasil dibuat!')),
+      );
+      Navigator.of(context).popUntil((route) => route.isFirst);
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Terjadi kesalahan: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  DateTime _calculatePickupTime() {
+    // Logika sederhana untuk menentukan waktu jemput
+    var pickupDate = DateTime.now();
+    if (_selectedDay == 'Besok') {
+      pickupDate = pickupDate.add(const Duration(days: 1));
+    }
+
+    if (_selectedTime != 'Sekarang') {
+      final timeParts = _selectedTime.split(':');
+      final hour = int.parse(timeParts[0]);
+      final minute = int.parse(timeParts[1].substring(0,2));
+      return DateTime(pickupDate.year, pickupDate.month, pickupDate.day, hour, minute);
+    }
+
+    return DateTime.now(); // Jika 'Sekarang'
   }
 
   @override
@@ -169,16 +257,10 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton.icon(
-          onPressed: () {
-            // TODO: Tambahkan logika untuk mengirim pesanan ke backend
-            print('Pesanan dikirim!');
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Permintaan penjemputan berhasil dibuat!')),
-            );
-            // Kembali ke halaman home (root) setelah memesan
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          },
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : ElevatedButton.icon(
+          onPressed: _processOrder, // Panggil fungsi _processOrder
           icon: const Text('Pesan', style: TextStyle(color: Colors.white, fontSize: 18)),
           label: const Icon(Icons.arrow_forward, color: Colors.white),
           style: ElevatedButton.styleFrom(

@@ -42,4 +42,26 @@ class WasteItem {
     this.quantity = 1,
     this.note,
   });
+
+  // BARU: Konversi WasteItem menjadi Map (untuk disimpan ke Firestore)
+  Map<String, dynamic> toJson() {
+    return {
+      'category': category.name, // Simpan nama enum sebagai String
+      'quantity': quantity,
+      'note': note,
+    };
+  }
+
+  // BARU: Buat WasteItem dari Map (saat membaca dari Firestore)
+  factory WasteItem.fromMap(Map<String, dynamic> map) {
+    return WasteItem(
+      // Temukan enum dari string, default ke 'lainnya' jika tidak ketemu
+      category: WasteCategory.values.firstWhere(
+            (e) => e.name == map['category'],
+        orElse: () => WasteCategory.lainnya,
+      ),
+      quantity: map['quantity'] ?? 1,
+      note: map['note'],
+    );
+  }
 }

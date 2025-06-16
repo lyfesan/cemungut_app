@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cemungut_app/app/models/app_user.dart'; // Make sure this path is correct
 import 'package:flutter/foundation.dart';
+import 'package:cemungut_app/app/models/pickup_order.dart';
 
 import '../models/bank_sampah.dart';
 
@@ -14,6 +15,8 @@ class FirestoreService {
   static final CollectionReference<Map<String, dynamic>> _wasteBanksCollection =
   _firestore.collection('wasteBanks'); // Assuming this is your collection name
 
+  static final CollectionReference<Map<String, dynamic>> _pickupOrderCollection =
+  _firestore.collection('transactions');
   /// Creates a new user document in Firestore.
   ///
   /// This method should be called right after a new user is created in Firebase Auth.
@@ -104,6 +107,55 @@ class FirestoreService {
         print('Error fetching waste banks: $e');
       }
       return []; // Return an empty list on error
+    }
+  }
+
+  static Future<void> createPickupOrder(PickupOrder order) async {
+    try {
+      // Menggunakan ID dari order object sebagai document ID
+      await _pickupOrderCollection.doc(order.id).set(order.toJson());
+      if (kDebugMode) {
+        print('Pickup order created successfully with ID: ${order.id}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error creating pickup order: $e');
+      }
+      rethrow;
+    }
+  }
+
+  static Future<void> deletePickupOrder(String orderId) async {
+    try {
+      await _pickupOrderCollection.doc(orderId).delete();
+      if (kDebugMode) {
+        print('Pickup order deleted successfully: $orderId');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error deleting pickup order: $e');
+      }
+      rethrow;
+    }
+  }
+
+  static Future<void> updatePickupOrderStatus({
+    required String orderId,
+    required PickupStatus status,
+  }) async {
+    try {
+      await _pickupOrderCollection.doc(orderId).update({
+        'status': status.name,
+        'updatedAt': Timestamp.now(),
+      });
+      if (kDebugMode) {
+        print('Pickup order $orderId status updated to ${status.name}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating pickup order status: $e');
+      }
+      rethrow;
     }
   }
 }
