@@ -23,7 +23,7 @@ class AuthGate extends StatelessWidget {
         // If user is logged in, show HomePage
         if (snapshot.hasData && snapshot.data != null) {
           // return const HomePage();
-          Get.put(NavigationController());
+          // Get.put(NavigationController());
           return NavigationMenu();
         }
         // If user is not logged in, show LoginScreen

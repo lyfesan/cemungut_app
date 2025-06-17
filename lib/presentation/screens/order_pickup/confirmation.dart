@@ -10,6 +10,7 @@ import 'package:cemungut_app/app/services/firebase_auth_service.dart'; // Asumsi
 import 'package:cemungut_app/app/models/app_user.dart'; // Untuk mendapatkan data user
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:cemungut_app/presentation/screens/order_pickup/order_success_screen.dart';
 
 
 class PickupConfirmationScreen extends StatefulWidget {
@@ -143,11 +144,11 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
       );
 
       await FirestoreService.createPickupOrder(newOrder);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Permintaan penjemputan berhasil dibuat!')),
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const OrderSuccessScreen()),
+            (Route<dynamic> route) => false,
       );
-      Navigator.of(context).popUntil((route) => route.isFirst);
 
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

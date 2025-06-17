@@ -16,7 +16,8 @@ class FirestoreService {
   _firestore.collection('wasteBanks'); // Assuming this is your collection name
 
   static final CollectionReference<Map<String, dynamic>> _pickupOrderCollection =
-  _firestore.collection('transactions');
+  _firestore.collection('pickupOrder');
+  
   /// Creates a new user document in Firestore.
   ///
   /// This method should be called right after a new user is created in Firebase Auth.
@@ -156,6 +157,25 @@ class FirestoreService {
         print('Error updating pickup order status: $e');
       }
       rethrow;
+    }
+  }
+
+  static Future<List<PickupOrder>> getPickupOrdersForUser(String userId) async {
+    try {
+      final querySnapshot = await _pickupOrderCollection
+          .where('userId', isEqualTo: userId)
+      // Urutkan berdasarkan yang paling baru
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => PickupOrder.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching pickup orders: $e');
+      }
+      return []; // Kembalikan list kosong jika terjadi error
     }
   }
 }

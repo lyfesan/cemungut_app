@@ -21,7 +21,11 @@ class CemungutApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Get.put(NavigationController());
-    return MaterialApp(
+
+    // kalau di physical device, pakai
+    // return GetMaterialApp (
+    return GetMaterialApp(
+
       debugShowCheckedModeBanner: false,
       title: 'Cemungut',
       theme: AppTheme.light,

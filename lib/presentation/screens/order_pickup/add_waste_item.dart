@@ -1,7 +1,9 @@
 // lib/app/presentation/screens/pickup/add_waste_item_screen.dart
 
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:cemungut_app/app/models/waste_item.dart'; // Ganti dengan path yang benar
+import 'package:image_picker/image_picker.dart';
+import 'package:cemungut_app/app/models/waste_item.dart';
 
 class AddWasteItemScreen extends StatefulWidget {
   const AddWasteItemScreen({super.key});
@@ -11,24 +13,65 @@ class AddWasteItemScreen extends StatefulWidget {
 }
 
 class _AddWasteItemScreenState extends State<AddWasteItemScreen> {
+  // State untuk memilih gambar (ini tetap sama)
+  final ImagePicker _picker = ImagePicker();
+  File? _selectedImageFile;
+
+  // State lain (tetap sama)
   int _quantity = 1;
   WasteCategory? _selectedCategory;
   final _notesController = TextEditingController();
 
-  void _incrementQuantity() {
-    setState(() {
-      _quantity++;
-    });
-  }
+  // Fungsi untuk memilih gambar (ini tetap sama)
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 1024,
+      );
 
-  void _decrementQuantity() {
-    setState(() {
-      if (_quantity > 1) {
-        _quantity--;
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImageFile = File(pickedFile.path);
+        });
       }
-    });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memilih gambar: $e')),
+      );
+    }
   }
 
+  void _showImageSourceActionSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Pilih dari Galeri'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text('Ambil Foto dari Kamera'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickImage(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- FUNGSI INI JADI SANGAT SEDERHANA ---
   void _addItemToCart() {
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -37,19 +80,24 @@ class _AddWasteItemScreenState extends State<AddWasteItemScreen> {
       return;
     }
 
+    // Tidak ada lagi upload! Langsung buat objeknya.
     final newItem = WasteItem(
       category: _selectedCategory!,
       quantity: _quantity,
       note: _notesController.text,
+      imageFile: _selectedImageFile, // <-- Langsung masukkan File yang dipilih
     );
+
+    // Kirim kembali item yang sudah berisi File gambar
     Navigator.pop(context, newItem);
   }
 
+  // ... (fungsi increment/decrement dan dispose tetap sama) ...
+  void _incrementQuantity() { setState(() => _quantity++); }
+  void _decrementQuantity() { if (_quantity > 1) { setState(() => _quantity--); } }
   @override
-  void dispose() {
-    _notesController.dispose();
-    super.dispose();
-  }
+  void dispose() { _notesController.dispose(); super.dispose(); }
+
 
   @override
   Widget build(BuildContext context) {
@@ -65,32 +113,42 @@ class _AddWasteItemScreenState extends State<AddWasteItemScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Foto Sampah (UI Placeholder)
-            const Text('Foto Sampah', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            // Bagian Foto Sampah (UI tetap sama, logikanya yang berubah)
+            const Text('Foto Sampah (Opsional)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
-            Container(
-              height: 150,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade400),
-              ),
-              child: const Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.photo_library_outlined, size: 30, color: Colors.grey),
-                    SizedBox(width: 16),
-                    Icon(Icons.camera_alt_outlined, size: 30, color: Colors.grey),
-                  ],
+            GestureDetector(
+              onTap: _showImageSourceActionSheet,
+              child: Container(
+                height: 200,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade400),
+                ),
+                child: _selectedImageFile != null
+                    ? ClipRRect(
+                  borderRadius: BorderRadius.circular(11),
+                  child: Image.file(_selectedImageFile!, fit: BoxFit.cover),
+                )
+                    : const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.grey),
+                      SizedBox(height: 8),
+                      Text('Ketuk untuk menambah gambar'),
+                    ],
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 24),
 
-            // Jumlah Sampah
+            // Sisa UI tidak ada yang berubah
             const Text('Jumlah', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 8),
+            // ... (Row dengan tombol +/-) ...
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -101,10 +159,7 @@ class _AddWasteItemScreenState extends State<AddWasteItemScreen> {
             ),
             const Center(child: Text('Berapa jumlah sampah?', style: TextStyle(color: Colors.grey))),
             const SizedBox(height: 24),
-
-            // Catatan
             const Text('Catatan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 8),
             TextField(
               controller: _notesController,
               decoration: const InputDecoration(
@@ -114,10 +169,8 @@ class _AddWasteItemScreenState extends State<AddWasteItemScreen> {
               maxLines: 3,
             ),
             const SizedBox(height: 24),
-
-            // Jenis Sampah
             const Text('Jenis Sampah', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 8),
+            // ... (List radio button) ...
             ...WasteCategory.values.map((category) {
               return Card(
                 elevation: _selectedCategory == category ? 4 : 1,
@@ -146,6 +199,7 @@ class _AddWasteItemScreenState extends State<AddWasteItemScreen> {
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
+        // Tidak perlu loading state lagi
         child: ElevatedButton.icon(
           onPressed: _addItemToCart,
           icon: const Icon(Icons.add, color: Colors.white),
