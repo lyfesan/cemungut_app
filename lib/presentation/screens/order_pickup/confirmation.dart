@@ -169,10 +169,8 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Konfirmasi Penjemputan'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+        centerTitle: true,
+        title: Image.asset('assets/CemGo.png', height: 32),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

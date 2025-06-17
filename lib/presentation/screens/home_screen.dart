@@ -181,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Icon(Icons.redeem_rounded, color: Colors.white, size: 48),
               SizedBox(height: 8),
-              Text('Pesan Sekarang',
+              Text('Pesan Penjemputan Sampah',
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 22,

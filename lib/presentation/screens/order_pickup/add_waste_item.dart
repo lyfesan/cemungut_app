@@ -103,10 +103,8 @@ class _AddWasteItemScreenState extends State<AddWasteItemScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tambah Sampah'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+        centerTitle: true,
+        title: Image.asset('assets/CemGo.png', height: 32),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),

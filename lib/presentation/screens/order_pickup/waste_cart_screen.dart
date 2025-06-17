@@ -60,10 +60,8 @@ class _WasteCartScreenState extends State<WasteCartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Keranjang Sampah'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+        centerTitle: true,
+        title: Image.asset('assets/CemGo.png', height: 32),
       ),
       body: _wasteItems.isEmpty
           ? const Center(
