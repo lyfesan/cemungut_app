@@ -16,7 +16,9 @@ class OrderSuccessScreen extends StatelessWidget {
     return Scaffold(
       // Kita buat AppBar sendiri agar bisa menghilangkan tombol kembali
       appBar: AppBar(
-        title: const Text('Terima Kasih'),
+        // title: const Text('Terima Kasih'),
+        centerTitle: true,
+        title: Image.asset('assets/CemGo.png', height: 32),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
@@ -32,7 +34,7 @@ class OrderSuccessScreen extends StatelessWidget {
           children: [
             // Container hijau utama
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 120),
               decoration: BoxDecoration(
                 color: primaryColor,
                 borderRadius: BorderRadius.circular(20),

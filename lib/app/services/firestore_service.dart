@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cemungut_app/app/models/app_user.dart'; // Make sure this path is correct
 import 'package:flutter/foundation.dart';
 import 'package:cemungut_app/app/models/pickup_order.dart';
+import 'package:cemungut_app/app/models/reward_item.dart';
 
 import '../models/bank_sampah.dart';
 
@@ -17,7 +18,10 @@ class FirestoreService {
 
   static final CollectionReference<Map<String, dynamic>> _pickupOrderCollection =
   _firestore.collection('pickupOrder');
-  
+
+  static final CollectionReference<Map<String, dynamic>> _rewardsCollection =
+  _firestore.collection('rewards');
+
   /// Creates a new user document in Firestore.
   ///
   /// This method should be called right after a new user is created in Firebase Auth.
@@ -38,6 +42,7 @@ class FirestoreService {
         email: email,
         phoneNumber: phoneNumber,
         photoUrl: null, // No photo URL at registration
+        points: 0,
         createdAt: now,
         updatedAt: now,
       );
@@ -176,6 +181,38 @@ class FirestoreService {
         print('Error fetching pickup orders: $e');
       }
       return []; // Kembalikan list kosong jika terjadi error
+    }
+  }
+
+  static Future<List<RewardItem>> getRewards() async {
+    try {
+      final snapshot = await _rewardsCollection.orderBy('pointsRequired').get();
+      return snapshot.docs.map((doc) => RewardItem.fromFirestore(doc)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching rewards: $e');
+      }
+      return [];
+    }
+  }
+
+  static Future<void> redeemPoints({
+    required String userId,
+    required int pointsToDeduct,
+  }) async {
+    try {
+      final userRef = _usersCollection.doc(userId);
+
+      // Menggunakan nilai negatif untuk mengurangi poin
+      await userRef.update({
+        'points': FieldValue.increment(-pointsToDeduct),
+        'updatedAt': Timestamp.now(),
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error redeeming points: $e');
+      }
+      rethrow;
     }
   }
 }
