@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'package:cemungut_app/app/models/pickup_order.dart';
 import 'package:cemungut_app/app/services/firestore_service.dart';
+import 'transaction_detail_screen.dart';
 
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({super.key});
@@ -158,7 +159,10 @@ class _TransactionScreenState extends State<TransactionScreen> with SingleTicker
                   itemCount: _filteredOrders.length,
                   itemBuilder: (context, index) {
                     final order = _filteredOrders[index];
-                    return _TransactionCard(order: order);
+                    return _TransactionCard(
+                        order: order,
+                        onRefresh:  _loadOrders,
+                    );
                   },
                 );
               },
@@ -172,7 +176,9 @@ class _TransactionScreenState extends State<TransactionScreen> with SingleTicker
 
 class _TransactionCard extends StatelessWidget {
   final PickupOrder order;
-  const _TransactionCard({required this.order});
+  final VoidCallback onRefresh;
+
+  const _TransactionCard({required this.order, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -185,53 +191,71 @@ class _TransactionCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: Tanggal & Status
-            Row(
-              children: [
-                const Icon(Icons.shopping_bag_outlined, size: 20, color: Colors.black54),
-                const SizedBox(width: 8),
-                Text(
-                  DateFormat('d MMMM y / HH:mm', 'id_ID').format(order.pickupTime.toDate()),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                _StatusChip(status: order.status),
-              ],
+      child: InkWell(
+        onTap: () async {
+          // Navigasi ke halaman detail dan tunggu hasilnya
+          final result = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TransactionDetailScreen(order: order),
             ),
-            const Divider(height: 24),
-            // Body: Rincian Sampah
-            Text(
-              'Sampah: $itemSummary',
-              style: TextStyle(color: Colors.grey[700]),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 16),
-            // Footer: Poin & Total
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Text('Total Poin '),
-                    const Icon(Icons.star, color: Colors.amber, size: 16),
-                    Text(
-                      ' ${order.estimatedPoints}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E824C)),
-                    ),
-                  ],
-                ),
-                Text('Total: $totalItems item', style: const TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ],
+          );
+
+          // Jika hasilnya 'true' (artinya ada perubahan), panggil refresh
+          if (result == true) {
+            onRefresh();
+          }
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: Tanggal & Status
+              Row(
+                children: [
+                  const Icon(Icons.shopping_bag_outlined, size: 20, color: Colors.black54),
+                  const SizedBox(width: 8),
+                  Text(
+                    DateFormat('d MMMM y / HH:mm', 'id_ID').format(order.pickupTime.toDate()),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  _StatusChip(status: order.status),
+                ],
+              ),
+              const Divider(height: 24),
+              // Body: Rincian Sampah
+              Text(
+                'Sampah: $itemSummary',
+                style: TextStyle(color: Colors.grey[700]),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 16),
+              // Footer: Poin & Total
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Text('Total Poin '),
+                      const Icon(Icons.star, color: Colors.amber, size: 16),
+                      Text(
+                        ' ${order.estimatedPoints}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E824C)),
+                      ),
+                    ],
+                  ),
+                  Text('Total: $totalItems item', style: const TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
+      )
+
     );
   }
 }

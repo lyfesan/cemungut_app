@@ -215,4 +215,25 @@ class FirestoreService {
       rethrow;
     }
   }
+
+  static Future<void> addPoints({
+    required String userId,
+    required int pointsToAdd,
+  }) async {
+    // Jika tidak ada poin untuk ditambahkan, tidak perlu melakukan apa-apa
+    if (pointsToAdd <= 0) return;
+
+    try {
+      final userRef = _usersCollection.doc(userId);
+      await userRef.update({
+        'points': FieldValue.increment(pointsToAdd),
+        'updatedAt': Timestamp.now(),
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error adding points: $e');
+      }
+      rethrow;
+    }
+  }
 }
