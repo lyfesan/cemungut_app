@@ -154,7 +154,15 @@ class _RewardScreenState extends State<RewardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reward', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        title: Text(
+            'Rewards',
+            style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary
+            )
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
