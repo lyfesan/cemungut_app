@@ -4,12 +4,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:cemungut_app/app/themes/theme.dart';
 import 'package:get/get.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await initializeDateFormatting('id_ID', null);
   runApp(const CemungutApp());
 }
 
@@ -19,7 +21,11 @@ class CemungutApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Get.put(NavigationController());
-    return MaterialApp(
+
+    // kalau di physical device, pakai
+    // return GetMaterialApp (
+    return GetMaterialApp(
+
       debugShowCheckedModeBanner: false,
       title: 'Cemungut',
       theme: AppTheme.light,
