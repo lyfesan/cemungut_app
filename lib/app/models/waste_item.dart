@@ -1,6 +1,7 @@
 // lib/app/models/waste_item.dart
 
-import 'package:flutter/material.dart';
+import 'dart:io';
+
 
 // Enum untuk kategori sampah agar lebih terstruktur
 enum WasteCategory {
@@ -36,13 +37,15 @@ class WasteItem {
   final WasteCategory category;
   int quantity;
   final String? note;
+  final File? imageFile;
 
   WasteItem({
     required this.category,
     this.quantity = 1,
     this.note,
+    this.imageFile,
   });
-
+  String get displayName => category.displayName;
   // BARU: Konversi WasteItem menjadi Map (untuk disimpan ke Firestore)
   Map<String, dynamic> toJson() {
     return {

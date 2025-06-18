@@ -6,6 +6,7 @@ class AppUser {
   final String email;
   final String phoneNumber; // Can be null
   final String? photoUrl;    // Can be null
+  final int points;
   final Timestamp createdAt;
   final Timestamp updatedAt;
 
@@ -15,6 +16,7 @@ class AppUser {
     required this.email,
     required this.phoneNumber,
     this.photoUrl,
+    required this.points,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -28,8 +30,10 @@ class AppUser {
       'email': email,
       'phoneNumber': phoneNumber,
       'photoUrl': photoUrl,
+      'points': points,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
+
     };
   }
 
@@ -48,6 +52,7 @@ class AppUser {
       email: data['email'] ?? '',
       phoneNumber: data['phoneNumber'], // Will be null if not present
       photoUrl: data['photoUrl'],       // Will be null if not present
+      points: data['points'] ?? 0,
       createdAt: data['createdAt'] ?? Timestamp.now(),
       updatedAt: data['updatedAt'] ?? Timestamp.now(),
     );

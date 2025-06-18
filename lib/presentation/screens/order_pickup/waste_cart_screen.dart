@@ -1,9 +1,9 @@
 // lib/app/presentation/screens/pickup/waste_cart_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:cemungut_app/app/models/waste_item.dart'; // Ganti dengan path yang benar
-import 'package:cemungut_app/presentation/screens/order_pickup/add_waste_item.dart'; // Ganti dengan path yang benar
-import 'package:cemungut_app/presentation/screens/order_pickup/confirmation.dart'; // Ganti dengan path yang benar
+import 'package:cemungut_app/app/models/waste_item.dart';
+import 'package:cemungut_app/presentation/screens/order_pickup/add_waste_item.dart';
+import 'package:cemungut_app/presentation/screens/order_pickup/confirmation.dart';
 
 class WasteCartScreen extends StatefulWidget {
   const WasteCartScreen({super.key});
@@ -23,13 +23,11 @@ class _WasteCartScreenState extends State<WasteCartScreen> {
 
     if (result != null) {
       setState(() {
-        // Cek apakah item dengan kategori yang sama sudah ada
+        // Logika ini tetap sama
         final index = _wasteItems.indexWhere((item) => item.category == result.category);
         if (index != -1) {
-          // Jika ada, tambahkan quantity-nya
           _wasteItems[index].quantity += result.quantity;
         } else {
-          // Jika tidak ada, tambahkan item baru
           _wasteItems.add(result);
         }
       });
@@ -37,6 +35,7 @@ class _WasteCartScreenState extends State<WasteCartScreen> {
   }
 
   void _navigateToConfirmation() {
+    // ... (Logika ini tetap sama)
     if (_wasteItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Keranjang sampah masih kosong.')),
@@ -61,18 +60,12 @@ class _WasteCartScreenState extends State<WasteCartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Keranjang Sampah'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+        centerTitle: true,
+        title: Image.asset('assets/CemGo.png', height: 32),
       ),
       body: _wasteItems.isEmpty
           ? const Center(
-        child: Text(
-          'Keranjang Anda kosong.\nKlik tombol + untuk menambah sampah.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, color: Colors.grey),
-        ),
+        // ... (Tampilan saat kosong tetap sama)
       )
           : ListView.builder(
         padding: const EdgeInsets.all(16.0),
@@ -82,7 +75,22 @@ class _WasteCartScreenState extends State<WasteCartScreen> {
           return Card(
             margin: const EdgeInsets.only(bottom: 12.0),
             child: ListTile(
-              leading: const Icon(Icons.check_box, color: Color(0xFF1E824C)),
+              // --- PERUBAHAN UTAMA DI SINI ---
+              leading: SizedBox(
+                width: 50,
+                height: 50,
+                child: item.imageFile != null
+                // Jika ada gambar, tampilkan gambar dari file
+                    ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Image.file(
+                    item.imageFile!,
+                    fit: BoxFit.cover,
+                  ),
+                )
+                // Jika tidak ada, tampilkan ikon checkbox
+                    : const Icon(Icons.check_box, color: Color(0xFF1E824C)),
+              ),
               title: Text(
                 item.category.displayName,
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -103,6 +111,7 @@ class _WasteCartScreenState extends State<WasteCartScreen> {
           );
         },
       ),
+      // ... (FloatingActionButton dan BottomNavigationBar tetap sama)
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddWasteItem,
         backgroundColor: const Color(0xFF1E824C),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'home_screen.dart';
 import 'reward/reward_screen.dart';
+import 'transaction/transaction_screen.dart';
 
 
 class NavigationMenu extends StatelessWidget {
@@ -11,7 +12,7 @@ class NavigationMenu extends StatelessWidget {
   final List<Widget> screens = const [
     HomeScreen(),
     RewardScreen(),
-    Center(child: Text('Transaksi')),
+    TransactionScreen(),
   ];
 
   @override
