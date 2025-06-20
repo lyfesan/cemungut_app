@@ -14,9 +14,15 @@ class BankSampahScreen extends StatefulWidget {
 }
 
 class _BankSampahScreenState extends State<BankSampahScreen> {
+  // Map and Loading State
   LatLng? _initialCenter;
-  final List<Marker> _markers = [];
   bool _isLoading = true;
+  final MapController _mapController = MapController();
+
+  // Search and Filtering State
+  final SearchController _searchController = SearchController();
+  List<BankSampah> _allWasteBanks = [];
+  List<Marker> _markers = [];
 
   @override
   void initState() {
@@ -24,15 +30,59 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
     _initializeMap();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _mapController.dispose();
+    super.dispose();
+  }
+
   Future<void> _initializeMap() async {
     final Position userPosition = await _determinePosition();
     _initialCenter = LatLng(userPosition.latitude, userPosition.longitude);
-    await _loadWasteBankMarkers();
+
+    // Fetch all banks and store them in our master list
+    _allWasteBanks = await FirestoreService.getWasteBanks();
+    _buildMarkersFromList(_allWasteBanks);
+
     if (mounted) {
       setState(() {
         _isLoading = false;
       });
     }
+  }
+
+  // This method builds the markers that are visible on the map
+  void _buildMarkersFromList(List<BankSampah> banks) {
+    _markers.clear();
+    for (final bank in banks) {
+      _markers.add(
+        Marker(
+          width: 50.0,
+          height: 50.0,
+          point: LatLng(bank.location.latitude, bank.location.longitude),
+          child: GestureDetector(
+            onTap: () => _onMarkerTapped(bank),
+            child: Icon(
+              Icons.location_on,
+              color: Theme.of(context).primaryColor,
+              size: 40,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  // This helper function is called when a marker or a search result is tapped
+  void _onMarkerTapped(BankSampah bank) {
+    // Move the map to the selected location
+    _mapController.move(
+      LatLng(bank.location.latitude, bank.location.longitude),
+      15.0,
+    );
+    // Show the details dialog
+    _showMarkerDetailsDialog(bank);
   }
 
   Future<Position> _determinePosition() async {
@@ -42,8 +92,17 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return Position(
-          latitude: -7.2575, longitude: 112.7521, timestamp: DateTime.now(),
-          accuracy: 0, altitude: 0, altitudeAccuracy: 0, heading: 0, headingAccuracy: 0, speed: 0, speedAccuracy: 0);
+        latitude: -7.2575,
+        longitude: 112.7521,
+        timestamp: DateTime.now(),
+        accuracy: 0,
+        altitude: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        headingAccuracy: 0,
+        speed: 0,
+        speedAccuracy: 0,
+      );
     }
 
     permission = await Geolocator.checkPermission();
@@ -51,52 +110,47 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         return Position(
-            latitude: -7.2575, longitude: 112.7521, timestamp: DateTime.now(),
-            accuracy: 0, altitude: 0, altitudeAccuracy: 0, heading: 0, headingAccuracy: 0, speed: 0, speedAccuracy: 0);
+          latitude: -7.2575,
+          longitude: 112.7521,
+          timestamp: DateTime.now(),
+          accuracy: 0,
+          altitude: 0,
+          altitudeAccuracy: 0,
+          heading: 0,
+          headingAccuracy: 0,
+          speed: 0,
+          speedAccuracy: 0,
+        );
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
       return Position(
-          latitude: -7.2575, longitude: 112.7521, timestamp: DateTime.now(),
-          accuracy: 0, altitude: 0, altitudeAccuracy: 0, heading: 0, headingAccuracy: 0, speed: 0, speedAccuracy: 0);
+        latitude: -7.2575,
+        longitude: 112.7521,
+        timestamp: DateTime.now(),
+        accuracy: 0,
+        altitude: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        headingAccuracy: 0,
+        speed: 0,
+        speedAccuracy: 0,
+      );
     }
 
     return await Geolocator.getCurrentPosition();
   }
 
-  // --- THIS METHOD IS UPDATED ---
-  Future<void> _loadWasteBankMarkers() async {
-    final List<BankSampah> wasteBanks = await FirestoreService.getWasteBanks();
-
-    for (final bank in wasteBanks) {
-      _markers.add(
-        Marker(
-          // Set the marker size to match our new widget
-          width: 50.0,
-          height: 50.0,
-          point: LatLng(bank.location.latitude, bank.location.longitude),
-          // The child is now a styled Container wrapping the HugeIcon
-          child: GestureDetector(
-            onTap: () => _showMarkerDetailsDialog(bank),
-            child: Icon(
-              Icons.location_on,
-              color: Theme.of(context).colorScheme.primary,
-              size: 40, // Adjust size to fit nicely inside the circle
-            ),
-          ),
-        ),
-      );
-    }
-  }
-
   void _showMarkerDetailsDialog(BankSampah bank) {
-    // ... (This method remains the same)
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(bank.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            bank.name,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
@@ -104,7 +158,11 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
                 if (bank.description.isNotEmpty) const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today, size: 16, color: Colors.black54),
+                    const Icon(
+                      Icons.calendar_today,
+                      size: 16,
+                      color: Colors.black54,
+                    ),
                     const SizedBox(width: 8),
                     Text('Hari: ${bank.operationalDay}'),
                   ],
@@ -112,7 +170,11 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.access_time, size: 16, color: Colors.black54),
+                    const Icon(
+                      Icons.access_time,
+                      size: 16,
+                      color: Colors.black54,
+                    ),
                     const SizedBox(width: 8),
                     Text('Jam: ${bank.operationalTime}'),
                   ],
@@ -127,7 +189,6 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
                 Navigator.of(context).pop();
               },
             ),
-            // The new "Directions" button
             ElevatedButton(
               child: const Text('Petunjuk Arah'),
               onPressed: () {
@@ -143,7 +204,8 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
 
   Future<void> _launchMapsUrl(double latitude, double longitude) async {
     final Uri mapsUrl = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&daddr=');
+      'https://www.google.com/maps/dir/?api=1&destination=3',
+    );
 
     if (await canLaunchUrl(mapsUrl)) {
       await launchUrl(mapsUrl);
@@ -158,48 +220,124 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ... (This method remains the same)
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         title: Image.asset('assets/CemBank.png', height: 32),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : FlutterMap(
-        options: MapOptions(
-          initialCenter: _initialCenter!,
-          initialZoom: 14.0,
-          interactionOptions: const InteractionOptions(
-            flags: InteractiveFlag.all,
-          ),
-        ),
-        children: [
-          TileLayer(
-            //urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-            urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-            subdomains: const ['a', 'b', 'c', 'd'],
-            userAgentPackageName: 'com.cemungut.app',
-          ),
-          MarkerLayer(
-            markers: _markers,
-          ),
-          RichAttributionWidget(
-            showFlutterMapAttribution: false,
-            attributions: [
-              TextSourceAttribution(
-                'CARTO',
-                onTap: () =>
-                    launchUrl(Uri.parse('https://carto.com/attributions')),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              // The body is now a Column with the SearchAnchor on top
+              // and the map filling the rest of the space.
+              : Stack(
+                children: [
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _initialCenter!,
+                      initialZoom: 14.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+                        subdomains: const ['a', 'b', 'c', 'd'],
+                      ),
+                      MarkerLayer(markers: _markers),
+                      RichAttributionWidget(
+                        showFlutterMapAttribution: false,
+                        attributions: [
+                          TextSourceAttribution(
+                            'CARTO',
+                            onTap:
+                                () => launchUrl(
+                                  Uri.parse('https://carto.com/attributions'),
+                                ),
+                          ),
+                          TextSourceAttribution(
+                            'OpenStreetMap',
+                            onTap:
+                                () => launchUrl(
+                                  Uri.parse(
+                                    'https://openstreetmap.org/copyright',
+                                  ),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: SearchAnchor(
+                      shrinkWrap: true,
+                      isFullScreen: false,
+                      searchController: _searchController,
+                      // This builds the search bar you see initially
+                      builder: (
+                        BuildContext context,
+                        SearchController controller,
+                      ) {
+                        return SearchBar(
+                          controller: controller,
+                          hintText: 'Cari bank sampah...',
+                          elevation: const WidgetStatePropertyAll(2.0),
+                          onTap: () {
+                            controller.openView();
+                          },
+                          // Open the view as soon as the user starts typing
+                          onChanged: (_) {
+                            if (!controller.isOpen) {
+                              controller.openView();
+                            }
+                          },
+                          leading: const Icon(Icons.search),
+                        );
+                      },
+                      // This builds the list of results when the search view is open
+                      suggestionsBuilder: (
+                        BuildContext context,
+                        SearchController controller,
+                      ) {
+                        final query = controller.text.toLowerCase();
+                        final filteredList =
+                            _allWasteBanks.where((bank) {
+                              return bank.name.toLowerCase().contains(query);
+                            }).toList();
+
+                        if (query.isNotEmpty && filteredList.isEmpty) {
+                          return [
+                            const ListTile(
+                              title: Text('Tidak ada hasil ditemukan.'),
+                            ),
+                          ];
+                        }
+
+                        return List<Widget>.generate(filteredList.length, (
+                          int index,
+                        ) {
+                          final bank = filteredList[index];
+                          return ListTile(
+                            title: Text(bank.name),
+                            subtitle: Text(bank.operationalDay),
+                            onTap: () {
+                              setState(() {
+                                // 1. Close the search view
+                                controller.closeView(bank.name);
+                                // 2. Unfocus the keyboard
+                                FocusScope.of(context).unfocus();
+                                // 3. Move map and show details
+                                _onMarkerTapped(bank);
+                              });
+                            },
+                          );
+                        });
+                      },
+                    ),
+                  ),
+                ],
               ),
-              TextSourceAttribution(
-                'OpenStreetMap',
-                onTap: () => launchUrl(Uri.parse('https://openstreetmap.org/copyright')),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

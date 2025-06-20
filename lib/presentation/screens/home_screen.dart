@@ -7,6 +7,7 @@ import '../../app/services/firebase_auth_service.dart';
 import '../../app/services/firestore_service.dart';
 import 'bank_sampah/bank_sampah_screen.dart';
 import 'package:cemungut_app/presentation/screens/order_pickup/waste_cart_screen.dart';
+import 'package:cemungut_app/presentation/screens/education/quiz_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -117,7 +118,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   name,
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             );
@@ -143,15 +146,23 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(12.0),
         child: Row(
           children: [
-            Icon(Icons.location_on,
-                color: Theme.of(context).primaryColor, size: 32),
+            Icon(
+              Icons.location_on,
+              color: Theme.of(context).primaryColor,
+              size: 32,
+            ),
             const SizedBox(width: 12),
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Lokasi penjemputan', style: TextStyle(color: Colors.grey)),
-                Text('Rumah Tung Tung Sahur',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  'Lokasi penjemputan',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                Text(
+                  'Rumah Tung Tung Sahur',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             const Spacer(),
@@ -181,11 +192,14 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Icon(Icons.redeem_rounded, color: Colors.white, size: 48),
               SizedBox(height: 8),
-              Text('Pesan Penjemputan Sampah',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold)),
+              Text(
+                'Pesan Penjemputan Sampah',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
         ),
@@ -193,37 +207,59 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Lokasi: lib/presentation/screens/home_screen.dart
+  // GANTIKAN SELURUH METHOD LAMA ANDA DENGAN YANG INI
+
   Widget _buildFeatureShortcuts(BuildContext context) {
     return Row(
       children: [
-        _buildShortcutCard(context,
-            icon: Icons.document_scanner_outlined,
-            label: 'Deteksi Sampah',
-            onTap: () {  }
-        ),
-        const SizedBox(width: 12),
-        _buildShortcutCard(context,
-            icon: Icons.school_outlined, label: 'Edukasi Sampah',
-            onTap: () {  }
-        ),
-        const SizedBox(width: 12),
+        // KARTU 1
         _buildShortcutCard(
-            context,
-            icon: Icons.store_mall_directory_outlined,
-            label: 'Lokasi Bank Sampah',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const BankSampahScreen()),
-              );
-            }
+          context,
+          icon: Icons.document_scanner_outlined,
+          label: 'Deteksi Sampah',
+          onTap: () {},
+        ),
+
+        // SPACER
+        const SizedBox(width: 12),
+
+        // KARTU 2
+        _buildShortcutCard(
+          context,
+          icon: Icons.school_outlined,
+          label: 'Edukasi Sampah',
+          onTap: () {
+            print('Tombol Edukasi Sampah diklik! Navigasi...');
+            Get.to(() => const QuizScreen());
+          },
+        ),
+
+        // SPACER
+        const SizedBox(width: 12),
+
+        // KARTU 3
+        _buildShortcutCard(
+          context,
+          icon: Icons.store_mall_directory_outlined,
+          label: 'Lokasi Bank Sampah',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const BankSampahScreen()),
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildShortcutCard(BuildContext context,
-      {required IconData icon, required String label, required VoidCallback onTap}) {
+  Widget _buildShortcutCard(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return Expanded(
       child: Card(
         elevation: 2,
@@ -238,9 +274,11 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Icon(icon, color: Theme.of(context).primaryColor, size: 36),
                 const SizedBox(height: 8),
-                Text(label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12)),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -270,14 +308,20 @@ class _HomeScreenState extends State<HomeScreen> {
         return Card(
           elevation: 2,
           shadowColor: Colors.black12,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${goalPoints - user.points} CemPoin menuju Gold',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  '${goalPoints - user.points} CemPoin menuju Gold',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 LinearProgressIndicator(
                   value: progress,
@@ -287,11 +331,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(5),
                 ),
                 const SizedBox(height: 4),
-                Text('${user.points} / $goalPoints', style: const TextStyle(color: Colors.grey)),
+                Text(
+                  '${user.points} / $goalPoints',
+                  style: const TextStyle(color: Colors.grey),
+                ),
                 const Divider(height: 24),
                 const Text('Bonus untuk anda:'),
-                Text('3% Ekstra poin saat berhasil order',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  '3% Ekstra poin saat berhasil order',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
           ),

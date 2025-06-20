@@ -3,6 +3,7 @@ import 'package:cemungut_app/app/models/app_user.dart'; // Make sure this path i
 import 'package:flutter/foundation.dart';
 import 'package:cemungut_app/app/models/pickup_order.dart';
 import 'package:cemungut_app/app/models/reward_item.dart';
+import 'package:cemungut_app/app/models/quiz_question.dart'; // <-- PASTIKAN BARIS INI ADA
 
 import '../models/bank_sampah.dart';
 
@@ -11,16 +12,18 @@ class FirestoreService {
 
   // The collection reference for the 'users' collection
   static final CollectionReference<Map<String, dynamic>> _usersCollection =
-  _firestore.collection('users');
+      _firestore.collection('users');
 
   static final CollectionReference<Map<String, dynamic>> _wasteBanksCollection =
-  _firestore.collection('wasteBanks'); // Assuming this is your collection name
+      _firestore.collection(
+        'wasteBanks',
+      ); // Assuming this is your collection name
 
-  static final CollectionReference<Map<String, dynamic>> _pickupOrderCollection =
-  _firestore.collection('pickupOrder');
+  static final CollectionReference<Map<String, dynamic>>
+  _pickupOrderCollection = _firestore.collection('pickupOrder');
 
   static final CollectionReference<Map<String, dynamic>> _rewardsCollection =
-  _firestore.collection('rewards');
+      _firestore.collection('rewards');
 
   /// Creates a new user document in Firestore.
   ///
@@ -167,11 +170,12 @@ class FirestoreService {
 
   static Future<List<PickupOrder>> getPickupOrdersForUser(String userId) async {
     try {
-      final querySnapshot = await _pickupOrderCollection
-          .where('userId', isEqualTo: userId)
-      // Urutkan berdasarkan yang paling baru
-          .orderBy('createdAt', descending: true)
-          .get();
+      final querySnapshot =
+          await _pickupOrderCollection
+              .where('userId', isEqualTo: userId)
+              // Urutkan berdasarkan yang paling baru
+              .orderBy('createdAt', descending: true)
+              .get();
 
       return querySnapshot.docs
           .map((doc) => PickupOrder.fromFirestore(doc))
@@ -234,6 +238,40 @@ class FirestoreService {
         print('Error adding points: $e');
       }
       rethrow;
+    }
+  }
+
+  static Future<List<QuizQuestion>> getQuizQuestions({int limit = 5}) async {
+    // <-- Menambahkan 'static'
+    try {
+      // Ambil SEMUA dokumen dulu karena Firestore tidak bisa .shuffle() secara native
+      QuerySnapshot snapshot =
+          await _firestore
+              .collection('quiz_questions')
+              .get(); // <-- Menggunakan _firestore
+
+      if (snapshot.docs.isEmpty) {
+        return [];
+      }
+
+      final docs = snapshot.docs;
+      docs.shuffle(); // Acak urutan semua dokumen
+
+      // Ambil sejumlah 'limit' dari daftar yang sudah diacak
+      final limitedDocs = docs.take(limit);
+
+      return limitedDocs.map((doc) {
+        return QuizQuestion.fromFirestore(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        );
+      }).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        // <-- Menggunakan kDebugMode
+        print("Error getting quiz questions: $e");
+      }
+      return [];
     }
   }
 }
