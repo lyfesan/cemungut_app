@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "359142820263",
+    "project_id": "cemungut-app",
+    "storage_bucket": "cemungut-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:359142820263:android:041a281d1dac40129dce82",
+        "android_client_info": {
+          "package_name": "com.cemungut.cemungut_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7dzE0B44Qnf2QerQP3x38curZdaVCW-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
