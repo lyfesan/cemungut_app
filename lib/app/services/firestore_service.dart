@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cemungut_app/app/models/pickup_order.dart';
 import 'package:cemungut_app/app/models/reward_item.dart';
 import 'package:cemungut_app/app/models/quiz_question.dart'; // <-- PASTIKAN BARIS INI ADA
+import 'package:cemungut_app/app/models/education_article.dart'; // <-- 1. TAMBAHKAN IMPORT INI
 
 import '../models/bank_sampah.dart';
 
@@ -241,8 +242,7 @@ class FirestoreService {
     }
   }
 
-  static Future<List<QuizQuestion>> getQuizQuestions({int limit = 5}) async {
-    // <-- Menambahkan 'static'
+  static Future<List<QuizQuestion>> getQuizQuestions({int limit = 10}) async {
     try {
       // Ambil SEMUA dokumen dulu karena Firestore tidak bisa .shuffle() secara native
       QuerySnapshot snapshot =
@@ -271,6 +271,29 @@ class FirestoreService {
         // <-- Menggunakan kDebugMode
         print("Error getting quiz questions: $e");
       }
+      return [];
+    }
+  }
+
+  static Future<List<EducationArticle>> getEducationArticles() async {
+    try {
+      final snapshot =
+          await _firestore
+              .collection('articles')
+              .orderBy(
+                'createdAt',
+                descending: true,
+              ) // Urutkan berdasarkan yang terbaru
+              .get();
+
+      return snapshot.docs
+          .map((doc) => EducationArticle.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching education articles: $e');
+      }
+      // Return an empty list on error to prevent the UI from crashing
       return [];
     }
   }

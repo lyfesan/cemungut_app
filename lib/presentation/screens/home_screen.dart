@@ -7,7 +7,7 @@ import '../../app/services/firebase_auth_service.dart';
 import '../../app/services/firestore_service.dart';
 import 'bank_sampah/bank_sampah_screen.dart';
 import 'package:cemungut_app/presentation/screens/order_pickup/waste_cart_screen.dart';
-import 'package:cemungut_app/presentation/screens/education/quiz_screen.dart';
+import 'package:cemungut_app/presentation/screens/education/education_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -230,11 +230,9 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icons.school_outlined,
           label: 'Edukasi Sampah',
           onTap: () {
-            print('Tombol Edukasi Sampah diklik! Navigasi...');
-            Get.to(() => const QuizScreen());
+            Get.to(() => const EducationScreen());
           },
         ),
-
         // SPACER
         const SizedBox(width: 12),
 
