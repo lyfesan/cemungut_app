@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cemungut_app/app/services/firebase_auth_service.dart'; // Adjust path if needed
+import 'package:cemungut_app/presentation/screens/profile/manage_address_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -68,7 +69,12 @@ class SettingsScreen extends StatelessWidget {
               leading: const Icon(Icons.location_on),
               title: const Text('Alamat Tersimpan'),
               contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-              onTap: (){},
+              onTap: (){
+                // --- MODIFIKASI DI SINI ---
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const ManageAddressScreen(),
+                ));
+              },
             ),
             const Divider(),
 

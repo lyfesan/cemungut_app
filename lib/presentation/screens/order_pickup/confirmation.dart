@@ -4,6 +4,8 @@ import 'package:cemungut_app/app/models/pickup_order.dart';
 import 'package:cemungut_app/app/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cemungut_app/app/models/address.dart';
+import 'package:cemungut_app/presentation/screens/order_pickup/select_address_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cemungut_app/app/models/waste_item.dart';
 import 'package:cemungut_app/app/services/firebase_auth_service.dart'; // Asumsi Anda punya service ini
@@ -26,6 +28,44 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
   final _notesController = TextEditingController();
   DateTime? _selectedPickupDateTime;
   bool _isLoading = false;
+  bool _isAddressLoading = true;
+
+  Address? _selectedAddress;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchInitialAddress(); // <-- PANGGIL FUNGSI UNTUK MENGAMBIL ALAMAT
+  }
+
+  // --- FUNGSI BARU UNTUK MENGAMBIL ALAMAT AWAL ---
+  Future<void> _fetchInitialAddress() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      setState(() => _isAddressLoading = false);
+      return;
+    }
+    final firstAddress = await FirestoreService.getFirstAddress(userId);
+    if (mounted) {
+      setState(() {
+        _selectedAddress = firstAddress;
+        _isAddressLoading = false;
+      });
+    }
+  }
+
+  // --- FUNGSI BARU UNTUK NAVIGASI KE PILIH ALAMAT ---
+  Future<void> _changeAddress() async {
+    final result = await Navigator.of(context).push<Address>(
+      MaterialPageRoute(builder: (context) => const SelectAddressScreen()),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _selectedAddress = result;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -93,6 +133,13 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
 
   Future<void> _processOrder() async {
 
+    if (_selectedAddress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Silakan pilih atau tambahkan alamat penjemputan.')),
+      );
+      return;
+    }
+
     if (_selectedPickupDateTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Silakan pilih waktu penjemputan.')),
@@ -133,7 +180,8 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
         id: orderId,
         userId: currentUser.uid,
         userName: appUser.name,
-        address: "Rumah Tung Tung Sahur", // Ganti dengan data alamat dari appUser
+        address: _selectedAddress!.addressDetail,
+        pickupLocation: _selectedAddress!.location,
         items: widget.wasteItems,
         pickupTime: Timestamp.fromDate(_selectedPickupDateTime!), // <-- GUNAKAN STATE BARU
         status: PickupStatus.pending,
@@ -179,12 +227,20 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
           children: [
             // Lokasi
             Card(
-              child: ListTile(
+              child: _isAddressLoading
+                  ? const ListTile(
+                leading: CircularProgressIndicator(),
+                title: Text("Memuat alamat..."),
+              )
+                  : ListTile(
                 leading: const Icon(Icons.location_on, color: Color(0xFF1E824C)),
-                title: const Text('Lokasi Penjemputan'),
-                subtitle: const Text('Rumah Tung Tung Sahur'),
-                trailing:
-                TextButton(onPressed: () {}, child: const Text('Ubah')),
+                title: Text(_selectedAddress?.name ?? 'Alamat Belum Dipilih'),
+                subtitle: Text(
+                  _selectedAddress?.addressDetail ?? 'Ketuk ubah untuk memilih atau menambah alamat',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: TextButton(onPressed: _changeAddress, child: const Text('Ubah')),
               ),
             ),
             const SizedBox(height: 16),

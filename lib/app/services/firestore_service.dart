@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cemungut_app/app/models/app_user.dart';
+import 'package:cemungut_app/app/models/address.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cemungut_app/app/models/pickup_order.dart';
 import 'package:cemungut_app/app/models/reward_item.dart';
@@ -336,4 +337,50 @@ class FirestoreService {
       return [];
     }
   }
+
+  static CollectionReference<Address> _addressesRef(String userId) {
+    return _firestore.collection('users').doc(userId).collection('addresses').withConverter<Address>(
+      fromFirestore: (snapshot, _) => Address.fromSnapshot(snapshot),
+      toFirestore: (address, _) => address.toJson(),
+    );
+  }
+
+  static Stream<List<Address>> getAddresses(String userId) {
+    return _addressesRef(userId).snapshots().map(
+          (snapshot) => snapshot.docs.map((doc) => doc.data()).toList(),
+    );
+  }
+
+  // Mengambil satu alamat default (atau yang pertama)
+  static Future<Address?> getFirstAddress(String userId) async {
+    final snapshot = await _addressesRef(userId).limit(1).get();
+    if (snapshot.docs.isNotEmpty) {
+      return snapshot.docs.first.data();
+    }
+    return null;
+  }
+
+  // Menambah alamat baru
+  static Future<void> addAddress(String userId, Address address) {
+    final newDocRef = _addressesRef(userId).doc();
+    // Kita buat Address baru dengan ID dari dokumen yang baru dibuat
+    final addressWithId = Address(
+        id: newDocRef.id,
+        name: address.name,
+        addressDetail: address.addressDetail,
+        note: address.note,
+        location: address.location);
+    return newDocRef.set(addressWithId);
+  }
+
+  // Mengupdate alamat
+  static Future<void> updateAddress(String userId, Address address) {
+    return _addressesRef(userId).doc(address.id).update(address.toJson());
+  }
+
+  // Menghapus alamat
+  static Future<void> deleteAddress(String userId, String addressId) {
+    return _addressesRef(userId).doc(addressId).delete();
+  }
+
 }
