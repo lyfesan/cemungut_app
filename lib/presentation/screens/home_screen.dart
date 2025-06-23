@@ -326,23 +326,69 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPointsCard(BuildContext context) {
-    // ... This method remains the same
+    final user = FirebaseAuthService.currentUser;
+    if (user == null) return const SizedBox.shrink(); // Jangan tampilkan jika belum login
+
     return FutureBuilder<AppUser?>(
-      future: FirestoreService.getAppUser(FirebaseAuthService.currentUser!.uid),
+      future: FirestoreService.getAppUser(user.uid),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          // Tampilkan placeholder saat loading
           return const Card(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(child: CircularProgressIndicator()),
-            ),
+            child: Padding(padding: EdgeInsets.all(16.0), child: Center(child: CircularProgressIndicator())),
           );
         }
 
-        final user = snapshot.data!;
+        final appUser = snapshot.data!;
         const int goalPoints = 350;
-        final double progress = (user.points / goalPoints).clamp(0.0, 1.0);
+
+        // Widget untuk bagian atas kartu (poin, progress, dll)
+        Widget topContent;
+        // Widget untuk bagian bawah kartu (bonus)
+        Widget bottomContent;
+
+        if (appUser.isGoldMember) {
+          // --- TAMPILAN JIKA SUDAH GOLD MEMBER ---
+          topContent = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.shield, color: Colors.amber[700], size: 28),
+                  const SizedBox(width: 8),
+                  Text('Anda adalah Gold Member!',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text('Total Poin Anda Saat Ini: ${appUser.points}', style: const TextStyle(color: Colors.grey)),
+            ],
+          );
+          bottomContent = Text('Bonus 3% poin di setiap transaksi!',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold));
+        } else {
+          // --- TAMPILAN JIKA BELUM GOLD MEMBER ---
+          final pointsToGoal = (goalPoints - appUser.points).clamp(0, goalPoints);
+          final double progress = (appUser.points / goalPoints).clamp(0.0, 1.0);
+          topContent = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('$pointsToGoal CemPoin menuju Gold',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Colors.grey[300],
+                color: Theme.of(context).primaryColor,
+                minHeight: 10,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              const SizedBox(height: 4),
+              Text('${appUser.points} / $goalPoints', style: const TextStyle(color: Colors.grey)),
+            ],
+          );
+          bottomContent = Text('Dapatkan bonus setelah menjadi Gold Member',
+              style: Theme.of(context).textTheme.bodyMedium);
+        }
 
         return Card(
           elevation: 2,
@@ -353,22 +399,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${goalPoints - user.points} CemPoin menuju Gold',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: Colors.grey[300],
-                  color: Theme.of(context).primaryColor,
-                  minHeight: 10,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                const SizedBox(height: 4),
-                Text('${user.points} / $goalPoints', style: const TextStyle(color: Colors.grey)),
+                topContent,
                 const Divider(height: 24),
                 const Text('Bonus untuk anda:'),
-                Text('3% Ekstra poin saat berhasil order',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                bottomContent,
               ],
             ),
           ),
