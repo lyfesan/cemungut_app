@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cemungut_app/app/models/app_user.dart'; // Make sure this path is correct
+import 'package:cemungut_app/app/models/app_user.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cemungut_app/app/models/pickup_order.dart';
 import 'package:cemungut_app/app/models/reward_item.dart';
-import 'package:cemungut_app/app/models/quiz_question.dart'; // <-- PASTIKAN BARIS INI ADA
-import 'package:cemungut_app/app/models/education_article.dart'; // <-- 1. TAMBAHKAN IMPORT INI
+import 'package:cemungut_app/app/models/quiz_question.dart';
+import 'package:cemungut_app/app/models/education_article.dart';
 
 import '../models/bank_sampah.dart';
 

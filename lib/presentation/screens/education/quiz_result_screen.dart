@@ -1,6 +1,3 @@
-// Lokasi: lib/presentation/screens/education/quiz_result_screen.dart
-// --- KODE BARU DENGAN DUA TOMBOL AKSI ---
-
 import 'package:cemungut_app/presentation/screens/education/quiz_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,7 +18,6 @@ class QuizResultScreen extends StatelessWidget {
     IconData icon;
     Color iconColor;
 
-    // Menentukan pesan dan ikon berdasarkan persentase skor
     double percentage = totalQuestions > 0 ? (score / totalQuestions) : 0;
     if (percentage >= 0.8) {
       message = "Luar Biasa!";
@@ -41,7 +37,6 @@ class QuizResultScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Hasil Kuis"),
         centerTitle: true,
-        // Sembunyikan tombol kembali bawaan agar pengguna memilih salah satu dari dua opsi di bawah
         automaticallyImplyLeading: false,
       ),
       body: Center(
@@ -67,32 +62,27 @@ class QuizResultScreen extends StatelessWidget {
                   context,
                 ).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
               ),
-              const Spacer(), // Pendorong agar tombol ke bawah
-              // === BAGIAN YANG DIUBAH: DUA TOMBOL AKSI ===
+              const Spacer(),
               Row(
                 children: [
-                  // Tombol untuk kembali ke halaman edukasi
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       onPressed: () {
-                        // Kembali ke layar sebelumnya (EducationScreen)
                         Get.back();
                       },
                       child: const Text('Kembali ke Edukasi'),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Tombol untuk mengulangi kuis
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       onPressed: () {
-                        // Ganti halaman ini dengan halaman kuis yang baru
                         Get.off(() => const QuizScreen());
                       },
                       child: const Text('Ulangi Kuis'),

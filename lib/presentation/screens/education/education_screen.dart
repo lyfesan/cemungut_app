@@ -12,13 +12,11 @@ class EducationScreen extends StatefulWidget {
 }
 
 class _EducationScreenState extends State<EducationScreen> {
-  // State untuk menampung hasil pengambilan data dari Firestore
   late Future<List<EducationArticle>> _articlesFuture;
 
   @override
   void initState() {
     super.initState();
-    // Panggil fungsi untuk mengambil data saat halaman pertama kali dibuka
     _articlesFuture = FirestoreService.getEducationArticles();
   }
 
@@ -26,19 +24,15 @@ class _EducationScreenState extends State<EducationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // AppBar dengan logo seperti yang kita sepakati
         title: Image.asset('assets/CemEdu.png', height: 32),
         centerTitle: true,
-        // Tombol kembali akan muncul secara otomatis oleh navigasi Flutter
       ),
       body: FutureBuilder<List<EducationArticle>>(
         future: _articlesFuture,
         builder: (context, snapshot) {
-          // 1. Saat data sedang dimuat
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          // 2. Jika terjadi error atau tidak ada data
           if (snapshot.hasError ||
               !snapshot.hasData ||
               snapshot.data!.isEmpty) {
@@ -54,13 +48,10 @@ class _EducationScreenState extends State<EducationScreen> {
             );
           }
 
-          // 3. Jika data berhasil didapatkan
           final articles = snapshot.data!;
           return Stack(
             children: [
-              // Daftar Kartu Edukasi yang bisa di-scroll
               ListView.builder(
-                // Beri padding di bawah agar tidak tertutup tombol kuis
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                 itemCount: articles.length,
                 itemBuilder: (context, index) {
@@ -68,7 +59,6 @@ class _EducationScreenState extends State<EducationScreen> {
                 },
               ),
 
-              // Tombol "Yuk, Ikut Kuis!" yang menempel di bawah
               _buildQuizButton(),
             ],
           );
@@ -77,25 +67,21 @@ class _EducationScreenState extends State<EducationScreen> {
     );
   }
 
-  // Widget untuk membangun setiap kartu artikel
   Widget _buildArticleCard(EducationArticle article) {
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       elevation: 4,
       shadowColor: Colors.black.withOpacity(0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior:
-          Clip.antiAlias, // Penting agar gambar mengikuti bentuk kartu
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gambar Artikel
           Image.network(
             article.imageUrl,
             height: 180,
             width: double.infinity,
             fit: BoxFit.cover,
-            // Tampilkan loading indicator saat gambar dimuat
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
               return Container(
@@ -104,7 +90,6 @@ class _EducationScreenState extends State<EducationScreen> {
                 child: const Center(child: CircularProgressIndicator()),
               );
             },
-            // Tampilkan ikon error jika gambar gagal dimuat
             errorBuilder: (context, error, stackTrace) {
               return Container(
                 height: 180,
@@ -117,7 +102,6 @@ class _EducationScreenState extends State<EducationScreen> {
               );
             },
           ),
-          // Judul dan Konten Artikel
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -145,14 +129,12 @@ class _EducationScreenState extends State<EducationScreen> {
     );
   }
 
-  // Widget untuk membangun tombol kuis di bagian bawah
   Widget _buildQuizButton() {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
-        // Efek gradasi agar tidak menutupi konten secara kasar
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
@@ -173,7 +155,6 @@ class _EducationScreenState extends State<EducationScreen> {
             ),
           ),
           onPressed: () {
-            // Arahkan ke halaman kuis
             Get.to(() => const QuizScreen());
           },
           child: const Text(

@@ -1,6 +1,3 @@
-// Lokasi: lib/presentation/screens/education/quiz_screen.dart
-// --- KODE DENGAN PERBAIKAN UNTUK MENAMPILKAN KOTAK EDUKASI ---
-
 import 'package:cemungut_app/app/models/quiz_question.dart';
 import 'package:cemungut_app/app/services/firestore_service.dart';
 import 'package:cemungut_app/presentation/screens/education/quiz_result_screen.dart';
@@ -92,7 +89,6 @@ class _QuizScreenState extends State<QuizScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ... (Indikator Progres dan Teks Pertanyaan tetap sama)
                 Text(
                   "Soal ${_currentQuestionIndex + 1} dari ${_questions.length}",
                   textAlign: TextAlign.center,
@@ -108,7 +104,6 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // ... (Pilihan Jawaban tetap sama)
                 ...List.generate(currentQuestion.options.length, (index) {
                   final isCorrect = index == currentQuestion.correctAnswerIndex;
                   final isSelected = index == _selectedAnswerIndex;
@@ -151,12 +146,10 @@ class _QuizScreenState extends State<QuizScreen> {
 
                 const Spacer(),
 
-                // === PERBAIKAN DI SINI: BAGIAN EDUKASI & TOMBOL ===
                 if (_isAnswered)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 1. KOTAK PENJELASAN EDUKASI (YANG SEBELUMNYA HILANG)
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -191,7 +184,6 @@ class _QuizScreenState extends State<QuizScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // 2. TOMBOL LANJUT
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
