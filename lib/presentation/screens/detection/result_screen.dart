@@ -1,7 +1,4 @@
-// Lokasi: lib/presentation/screens/detection/result_screen.dart
-// --- KODE DENGAN TIMEOUT DAN APPBAR BARU ---
-
-import 'dart:async'; // <-- Import untuk TimeoutException
+import 'dart:async';
 import 'dart:io';
 import 'package:cemungut_app/app/services/tflite_service.dart';
 import 'package:cemungut_app/presentation/screens/navigation_menu.dart';
@@ -21,9 +18,8 @@ class _ResultScreenState extends State<ResultScreen> {
   late TfliteService _tfliteService;
   Map<String, dynamic>? _prediction;
   bool _isLoading = true;
-  String? _errorMessage; // State untuk menyimpan pesan error spesifik
+  String? _errorMessage;
 
-  // ... (Kamus data _labelTranslations, _categoryInfo, _recommendations tetap sama)
   final Map<String, String> _labelTranslations = {
     'Cardboard': 'Kardus',
     'Food Organics': 'Sampah Makanan',
@@ -88,13 +84,11 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _runInferenceWithTimeout() async {
     try {
-      // Jalankan prediksi dengan batas waktu 60 detik
       final result = await _tfliteService
           .predictImage(widget.imagePath)
           .timeout(
             const Duration(seconds: 60),
             onTimeout: () {
-              // Custom exception jika waktu habis
               throw TimeoutException('Waktu analisis gambar habis.');
             },
           );
@@ -108,7 +102,7 @@ class _ResultScreenState extends State<ResultScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          // Tangkap error (termasuk timeout) dan siapkan pesan
+          // Catch error (termasuk timeout) dan siapkan pesan
           _errorMessage =
               e is TimeoutException
                   ? 'Waktu analisis habis. Coba lagi dengan gambar lain.'
@@ -123,7 +117,6 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // --- PERUBAHAN APPBAR DI SINI ---
         title: Image.asset('assets/Hasil_Deteksi.png', height: 32),
         centerTitle: true,
         automaticallyImplyLeading: false,
@@ -150,7 +143,6 @@ class _ResultScreenState extends State<ResultScreen> {
     ),
   );
 
-  // Widget Error sekarang menampilkan pesan dinamis dan tombol keluar
   Widget _buildErrorView(String message) {
     return Center(
       child: Padding(
@@ -163,7 +155,7 @@ class _ResultScreenState extends State<ResultScreen> {
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => Get.back(), // Kembali ke halaman deteksi
+              onPressed: () => Get.back(),
               child: const Text('Coba Lagi'),
             ),
           ],
@@ -172,7 +164,6 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  // ... (_buildResultView tetap sama)
   Widget _buildResultView() {
     final String englishLabel = _prediction!['label'];
     final double confidence = _prediction!['confidence'];

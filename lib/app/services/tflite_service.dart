@@ -1,6 +1,3 @@
-// Lokasi: lib/app/services/tflite_service.dart
-// --- KODE DENGAN PERBAIKAN TIPE DATA TENSOR (uint8) ---
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
@@ -52,13 +49,11 @@ class TfliteService {
       );
       print('--- LOG 3: Ukuran gambar berhasil diubah. Memproses tensor...');
 
-      // --- PERBAIKAN 1: GUNAKAN Uint8List BUKAN Float32List ---
       var inputTensor = Uint8List(1 * 224 * 224 * 3);
       var bufferIndex = 0;
       for (var y = 0; y < resizedImage.height; y++) {
         for (var x = 0; x < resizedImage.width; x++) {
           var pixel = resizedImage.getPixel(x, y);
-          // --- PERBAIKAN 2: HAPUS NORMALISASI, GUNAKAN NILAI ASLI 0-255 ---
           inputTensor[bufferIndex++] = pixel.r.toInt();
           inputTensor[bufferIndex++] = pixel.g.toInt();
           inputTensor[bufferIndex++] = pixel.b.toInt();
@@ -67,7 +62,6 @@ class TfliteService {
       final input = inputTensor.reshape([1, 224, 224, 3]);
       print('--- LOG 4: Tensor siap. Menjalankan inferensi model...');
 
-      // --- PERBAIKAN 3: SIAPKAN OUTPUT UNTUK MENERIMA uint8 ---
       final output = List.filled(
         1 * _labels!.length,
         0,
@@ -87,7 +81,6 @@ class TfliteService {
       }
       print('--- LOG 6: Hasil ditemukan: ${_labels![maxIndex]}');
 
-      // --- PERBAIKAN 4: HITUNG SKOR KEYAKINAN DENGAN MEMBAGI 255 ---
       final confidence = maxValue / 255.0;
 
       return {'label': _labels![maxIndex], 'confidence': confidence};

@@ -1,15 +1,35 @@
-// Lokasi: lib/presentation/screens/detection/detection_screen.dart
-
 import 'dart:io';
 import 'package:cemungut_app/presentation/screens/detection/result_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
-class DetectionScreen extends StatelessWidget {
+class DetectionScreen extends StatefulWidget {
   const DetectionScreen({super.key});
 
-  /// Fungsi untuk memilih gambar dan langsung bernavigasi ke halaman hasil.
+  @override
+  State<DetectionScreen> createState() => _DetectionScreenState();
+}
+
+class _DetectionScreenState extends State<DetectionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.snackbar(
+        'Fitur Beta', // Judul Notifikasi
+        'Akurasi deteksi masih dalam tahap pengembangan. Hasil mungkin belum 100% akurat.', // Pesan singkat
+        icon: Icon(Icons.info_outline, color: Colors.white),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.blue.withOpacity(0.9),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 8,
+        duration: const Duration(seconds: 4),
+      );
+    });
+  }
+
   void _pickImageAndNavigate(ImageSource source) async {
     final picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(
@@ -18,11 +38,8 @@ class DetectionScreen extends StatelessWidget {
     );
 
     if (pickedFile != null) {
-      // Jika gambar berhasil dipilih, kirim path gambar ke halaman hasil
-      // untuk diproses dan ditampilkan.
       Get.to(() => ResultScreen(imagePath: pickedFile.path));
     } else {
-      // Pengguna membatalkan pemilihan gambar.
       print('Pemilihan gambar dibatalkan.');
     }
   }
