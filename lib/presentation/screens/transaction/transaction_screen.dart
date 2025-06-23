@@ -109,66 +109,76 @@ class _TransactionScreenState extends State<TransactionScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Transaksi'),
-        elevation: 1,
-      ),
-      body: Column(
-        children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Cari transaksi...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+    return SafeArea(
+      child: Scaffold(
+        // appBar: AppBar(
+        //   // centerTitle: true,
+        //   // title: Text(
+        //   //     'Transaksi',
+        //   //     style: TextStyle(
+        //   //         fontSize: 28,
+        //   //         fontWeight: FontWeight.bold,
+        //   //         color: Theme.of(context).colorScheme.primary
+        //   //     )
+        //   // ),
+        //   // elevation: 1,
+        // ),
+        body: Column(
+          children: [
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Cari transaksi...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
                 ),
-                filled: true,
-                fillColor: Colors.grey[200],
               ),
             ),
-          ),
-          // Tab Bar
-          TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabs: _tabs.map((label) => Tab(text: label)).toList(),
-          ),
-          // Transaction List
-          Expanded(
-            child: FutureBuilder<List<PickupOrder>>(
-              future: _ordersFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (_filteredOrders.isEmpty) {
-                  return const Center(child: Text('Tidak ada transaksi ditemukan.'));
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _filteredOrders.length,
-                  itemBuilder: (context, index) {
-                    final order = _filteredOrders[index];
-                    return _TransactionCard(
-                        order: order,
-                        onRefresh:  _loadOrders,
-                    );
-                  },
-                );
-              },
+            // Tab Bar
+            TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabs: _tabs.map((label) => Tab(text: label)).toList(),
             ),
-          ),
-        ],
+            // Transaction List
+            Expanded(
+              child: FutureBuilder<List<PickupOrder>>(
+                future: _ordersFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (_filteredOrders.isEmpty) {
+                    return const Center(child: Text('Tidak ada transaksi ditemukan.'));
+                  }
+      
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _filteredOrders.length,
+                    itemBuilder: (context, index) {
+                      final order = _filteredOrders[index];
+                      return _TransactionCard(
+                          order: order,
+                          onRefresh:  _loadOrders,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
