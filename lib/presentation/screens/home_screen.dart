@@ -1,5 +1,8 @@
-import 'package:cemungut_app/presentation/screens/profile/profile_screen.dart';
+import 'package:cemungut_app/presentation/screens/detection/detection_screen.dart';
+import 'package:cemungut_app/presentation/screens/education/education_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:showcaseview/showcaseview.dart';
+import 'package:cemungut_app/presentation/screens/profile/profile_screen.dart';
 import 'package:get/get.dart';
 import 'package:cemungut_app/presentation/screens/navigation_menu.dart'; // Adjust path
 import '../../app/models/app_user.dart';
@@ -7,7 +10,6 @@ import '../../app/services/firebase_auth_service.dart';
 import '../../app/services/firestore_service.dart';
 import 'bank_sampah/bank_sampah_screen.dart';
 import 'package:cemungut_app/presentation/screens/order_pickup/waste_cart_screen.dart';
-import 'package:cemungut_app/presentation/screens/education/education_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   // 1. Accept the new keys
@@ -73,9 +75,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
-    // HomeScreen no longer has a Scaffold. It's just the body content.
+    // ... main build method remains the same ...
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -119,8 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // This helper builds the new header that sits at the top of the body
   Widget _buildHeader(BuildContext context) {
+    // ... This method remains the same ...
     final theme = Theme.of(context);
     return Row(
       children: [
@@ -168,8 +171,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // All other _build...Card methods remain the same as before.
   Widget _buildLocationCard(BuildContext context) {
+    // ... This method remains the same ...
     return Card(
       elevation: 2,
       shadowColor: Colors.black12,
@@ -199,6 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildOrderNowCard(BuildContext context) {
+    // ... This method remains the same ...
     return Card(
       color: Theme.of(context).primaryColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -228,55 +232,92 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // --- THIS METHOD IS UPDATED ---
   Widget _buildFeatureShortcuts(BuildContext context) {
     return Row(
       children: [
-        _buildShortcutCard(context,
-            icon: Icons.document_scanner_outlined,
-            label: 'Deteksi Sampah',
-            onTap: () {  }
-        ),
-        const SizedBox(width: 12),
-        _buildShortcutCard(context,
-            icon: Icons.school_outlined, label: 'Edukasi Sampah',
-            onTap: () {  }
+        // 2a. Wrap each shortcut card in a Showcase widget
+        // The _buildShortcutCard already returns an Expanded, so we wrap that call.
+        _buildShortcutCard(
+          context,
+          key: widget.detectionKey,
+          icon: Icons.document_scanner_outlined,
+          label: 'Deteksi Sampah',
+          showcaseTitle: 'Deteksi Sampah',
+          showcaseDesc: 'Gunakan AI untuk mendeteksi jenis sampah dari gambar.',
+          onTap: () {
+            //Get.to(DetectionScreen())
+            Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const DetectionScreen())
+            );
+          },
         ),
         const SizedBox(width: 12),
         _buildShortcutCard(
-            context,
-            icon: Icons.store_mall_directory_outlined,
-            label: 'Lokasi Bank Sampah',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const BankSampahScreen()),
-              );
-            }
+          context,
+          key: widget.educationKey,
+          icon: Icons.school_outlined,
+          label: 'Edukasi Sampah',
+          showcaseTitle: 'Edukasi Sampah',
+          showcaseDesc: 'Pelajari lebih lanjut tentang pengelolaan sampah yang benar.',
+          onTap: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const EducationScreen())
+            );
+          },
+        ),
+        const SizedBox(width: 12),
+        _buildShortcutCard(
+          context,
+          key: widget.bankSampahKey,
+          icon: Icons.store_mall_directory_outlined,
+          label: 'Lokasi Bank Sampah',
+          showcaseTitle: 'Lokasi Bank Sampah',
+          showcaseDesc: 'Temukan lokasi bank sampah terdekat di sekitar Anda.',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const BankSampahScreen()),
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildShortcutCard(BuildContext context,
-      {required IconData icon, required String label, required VoidCallback onTap}) {
+  // 2b. Update the helper method to accept the key and showcase details
+  Widget _buildShortcutCard(
+      BuildContext context, {
+        required GlobalKey key,
+        required IconData icon,
+        required String label,
+        required VoidCallback onTap,
+        required String showcaseTitle,
+        required String showcaseDesc,
+      }) {
     return Expanded(
-      child: Card(
-        elevation: 2,
-        shadowColor: Colors.black12,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Column(
-              children: [
-                Icon(icon, color: Theme.of(context).primaryColor, size: 36),
-                const SizedBox(height: 8),
-                Text(label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12)),
-              ],
+      child: Showcase(
+        key: key,
+        title: showcaseTitle,
+        description: showcaseDesc,
+        child: Card(
+          elevation: 2,
+          shadowColor: Colors.black12,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Column(
+                children: [
+                  Icon(icon, color: Theme.of(context).primaryColor, size: 36),
+                  const SizedBox(height: 8),
+                  Text(label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 12)),
+                ],
+              ),
             ),
           ),
         ),
@@ -285,6 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPointsCard(BuildContext context) {
+    // ... This method remains the same
     return FutureBuilder<AppUser?>(
       future: FirestoreService.getAppUser(FirebaseAuthService.currentUser!.uid),
       builder: (context, snapshot) {

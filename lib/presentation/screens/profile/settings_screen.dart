@@ -65,6 +65,14 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           children: [
             ListTile(
+              leading: const Icon(Icons.location_on),
+              title: const Text('Alamat Tersimpan'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              onTap: (){},
+            ),
+            const Divider(),
+
+            ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text('Tentang Aplikasi'),
               contentPadding: const EdgeInsets.symmetric(horizontal: 8),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -5,6 +7,9 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cemungut_app/app/models/bank_sampah.dart';
 import 'package:cemungut_app/app/services/firestore_service.dart';
+import 'package:cemungut_app/app/services/geolocation_service.dart';
+
+import '../../../app/services/geocoding_service.dart';
 
 class BankSampahScreen extends StatefulWidget {
   const BankSampahScreen({super.key});
@@ -25,8 +30,11 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
   }
 
   Future<void> _initializeMap() async {
-    final Position userPosition = await _determinePosition();
+    // 2. Call the new service to get the user's position
+    final Position userPosition = await GeolocationService.getCurrentPosition();
+
     _initialCenter = LatLng(userPosition.latitude, userPosition.longitude);
+
     await _loadWasteBankMarkers();
     if (mounted) {
       setState(() {
@@ -35,54 +43,22 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
     }
   }
 
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Position(
-          latitude: -7.2575, longitude: 112.7521, timestamp: DateTime.now(),
-          accuracy: 0, altitude: 0, altitudeAccuracy: 0, heading: 0, headingAccuracy: 0, speed: 0, speedAccuracy: 0);
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Position(
-            latitude: -7.2575, longitude: 112.7521, timestamp: DateTime.now(),
-            accuracy: 0, altitude: 0, altitudeAccuracy: 0, heading: 0, headingAccuracy: 0, speed: 0, speedAccuracy: 0);
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Position(
-          latitude: -7.2575, longitude: 112.7521, timestamp: DateTime.now(),
-          accuracy: 0, altitude: 0, altitudeAccuracy: 0, heading: 0, headingAccuracy: 0, speed: 0, speedAccuracy: 0);
-    }
-
-    return await Geolocator.getCurrentPosition();
-  }
-
-  // --- THIS METHOD IS UPDATED ---
   Future<void> _loadWasteBankMarkers() async {
+    // ... (This method remains the same)
     final List<BankSampah> wasteBanks = await FirestoreService.getWasteBanks();
 
     for (final bank in wasteBanks) {
       _markers.add(
         Marker(
-          // Set the marker size to match our new widget
           width: 50.0,
           height: 50.0,
           point: LatLng(bank.location.latitude, bank.location.longitude),
-          // The child is now a styled Container wrapping the HugeIcon
           child: GestureDetector(
             onTap: () => _showMarkerDetailsDialog(bank),
             child: Icon(
               Icons.location_on,
               color: Theme.of(context).colorScheme.primary,
-              size: 40, // Adjust size to fit nicely inside the circle
+              size: 40,
             ),
           ),
         ),
@@ -127,7 +103,6 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
                 Navigator.of(context).pop();
               },
             ),
-            // The new "Directions" button
             ElevatedButton(
               child: const Text('Petunjuk Arah'),
               onPressed: () {
@@ -142,6 +117,7 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
   }
 
   Future<void> _launchMapsUrl(double latitude, double longitude) async {
+    // ... (This method remains the same)
     final Uri mapsUrl = Uri.parse(
         'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&daddr=');
 
@@ -176,7 +152,6 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
         ),
         children: [
           TileLayer(
-            //urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
             urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
             subdomains: const ['a', 'b', 'c', 'd'],
             userAgentPackageName: 'com.cemungut.app',
