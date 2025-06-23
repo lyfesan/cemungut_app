@@ -49,13 +49,55 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
   }
 
   Future<void> _determinePosition() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Izin lokasi ditolak. Peta akan menampilkan lokasi default.')),
+          );
+        }
+        // Lanjutkan dengan lokasi default dari service
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Izin lokasi ditolak permanen. Silakan aktifkan di pengaturan aplikasi.')),
+        );
+      }
+      // Lanjutkan dengan lokasi default dari service
+    }
+
+    // Jika izin diberikan, dapatkan posisi saat ini
     final Position position = await GeolocationService.getCurrentPosition();
+    if (mounted) {
+      setState(() {
+        _currentMapCenter = LatLng(position.latitude, position.longitude);
+        _isLoading = false;
+      });
+      // Pindahkan ke map controller dan update alamat
+      _mapController.move(_currentMapCenter!, 17.0);
+      _onMapPositionChanged(_currentMapCenter!);
+    }
+  }
+
+  Future<void> _centerOnUserLocation() async {
     setState(() {
-      _currentMapCenter = LatLng(position.latitude, position.longitude);
-      _isLoading = false;
+      _addressDetail = "Mencari lokasi Anda...";
     });
-    // Trigger geocoding for initial position
-    _onMapPositionChanged(_currentMapCenter!);
+
+    final Position position = await GeolocationService.getCurrentPosition();
+    final newCenter = LatLng(position.latitude, position.longitude);
+
+    if (mounted) {
+      // Animasikan peta ke lokasi baru
+      _mapController.move(newCenter, 17.0);
+      // Trigger geocoding untuk update alamat
+      _onMapPositionChanged(newCenter);
+    }
   }
 
   void _onMapPositionChanged(LatLng position) {
@@ -172,6 +214,16 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
               Icons.location_pin,
               color: Colors.red,
               size: 50,
+            ),
+          ),
+
+          Positioned(
+            top: 16,
+            right: 16,
+            child: FloatingActionButton(
+              onPressed: _centerOnUserLocation,
+              backgroundColor: Colors.white,
+              child: const Icon(Icons.my_location, color: Colors.blue),
             ),
           ),
           Positioned(

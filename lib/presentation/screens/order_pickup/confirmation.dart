@@ -28,28 +28,36 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
   final _notesController = TextEditingController();
   DateTime? _selectedPickupDateTime;
   bool _isLoading = false;
-  bool _isAddressLoading = true;
+  bool _isDataLoading = true;
 
   Address? _selectedAddress;
+  AppUser? _currentUserData;
 
   @override
   void initState() {
     super.initState();
-    _fetchInitialAddress(); // <-- PANGGIL FUNGSI UNTUK MENGAMBIL ALAMAT
+    _fetchInitialData();
   }
 
   // --- FUNGSI BARU UNTUK MENGAMBIL ALAMAT AWAL ---
-  Future<void> _fetchInitialAddress() async {
+  Future<void> _fetchInitialData() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
-      setState(() => _isAddressLoading = false);
+      if (mounted) setState(() => _isDataLoading = false);
       return;
     }
-    final firstAddress = await FirestoreService.getFirstAddress(userId);
+
+    // Ambil data user dan alamat secara bersamaan
+    final results = await Future.wait([
+      FirestoreService.getAppUser(userId),
+      FirestoreService.getFirstAddress(userId),
+    ]);
+
     if (mounted) {
       setState(() {
-        _selectedAddress = firstAddress;
-        _isAddressLoading = false;
+        _currentUserData = results[0] as AppUser?;
+        _selectedAddress = results[1] as Address?;
+        _isDataLoading = false;
       });
     }
   }
@@ -151,17 +159,7 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
 
 
     // 1. Dapatkan user yang sedang login
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Anda harus login untuk memesan.')));
-      setState(() => _isLoading = false);
-      return;
-    }
-
-    // 2. Dapatkan detail data user dari Firestore
-    final appUser = await FirestoreService.getAppUser(currentUser.uid);
-    if (appUser == null) {
+    if (_currentUserData == null) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gagal mendapatkan data pengguna.')));
       setState(() => _isLoading = false);
@@ -172,20 +170,27 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
     try {
       final totalItems =
       widget.wasteItems.fold<int>(0, (sum, item) => sum + item.quantity);
-      final totalPoints = totalItems * 25;
+      final basePoints = totalItems * 25;
+      int bonusPoints = 0;
+      if (_currentUserData!.isGoldMember) {
+        bonusPoints = (basePoints * 0.03).round(); // Bonus 3%
+      }
+      final totalPoints = basePoints + bonusPoints;
       final orderId =
           FirebaseFirestore.instance.collection('pickupOrders').doc().id;
 
       final newOrder = PickupOrder(
         id: orderId,
-        userId: currentUser.uid,
-        userName: appUser.name,
+        userId: _currentUserData!.id,
+        userName: _currentUserData!.name,
         address: _selectedAddress!.addressDetail,
         pickupLocation: _selectedAddress!.location,
         items: widget.wasteItems,
         pickupTime: Timestamp.fromDate(_selectedPickupDateTime!), // <-- GUNAKAN STATE BARU
         status: PickupStatus.pending,
-        estimatedPoints: totalPoints,
+        basePoints: basePoints,
+        bonusPoints: bonusPoints,
+        totalPoints: totalPoints,
         orderNote: _notesController.text, // <-- TAMBAHKAN CATATAN DARI CONTROLLER
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -213,7 +218,14 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
   Widget build(BuildContext context) {
     final summary = _getWasteSummary();
     final totalItems = summary.values.reduce((a, b) => a + b);
-    final totalPoints = totalItems * 25;
+    final basePoints = totalItems * 25;
+    int bonusPoints = 0;
+
+    final bool isGoldMember = _currentUserData?.isGoldMember ?? false;
+    if (isGoldMember) {
+      bonusPoints = (basePoints * 0.03).round();
+    }
+    final totalPoints = basePoints + bonusPoints;
 
     return Scaffold(
       appBar: AppBar(
@@ -227,12 +239,7 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
           children: [
             // Lokasi
             Card(
-              child: _isAddressLoading
-                  ? const ListTile(
-                leading: CircularProgressIndicator(),
-                title: Text("Memuat alamat..."),
-              )
-                  : ListTile(
+              child: ListTile(
                 leading: const Icon(Icons.location_on, color: Color(0xFF1E824C)),
                 title: Text(_selectedAddress?.name ?? 'Alamat Belum Dipilih'),
                 subtitle: Text(
@@ -334,20 +341,54 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
                             const TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16), // Beri sedikit spasi
+
+                    // --- UI Poin yang Diperbarui ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Estimasi Poin'),
+                        const Text('Poin Dasar'),
+                        Text('$basePoints Poin'),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Tampilkan bonus hanya jika ada (dan user adalah gold member)
+                    if (isGoldMember && bonusPoints > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Text('Bonus Gold Member (3%)', style: TextStyle(color: Colors.amber[800])),
+                                const SizedBox(width: 4),
+                                Icon(Icons.shield, color: Colors.amber[700], size: 16),
+                              ],
+                            ),
+                            Text('+ $bonusPoints Poin', style: TextStyle(color: Colors.amber[800], fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    const Divider(height: 20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Total Estimasi Poin',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                         Row(
                           children: [
                             const Icon(Icons.star,
-                                color: Colors.amber, size: 16),
+                                color: Colors.amber, size: 20),
                             const SizedBox(width: 4),
                             Text('$totalPoints',
                                 style: const TextStyle(
-                                    color: Color(0xFF1E824C),
-                                    fontWeight: FontWeight.bold)),
+                                  color: Color(0xFF1E824C),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                )),
                           ],
                         )
                       ],

@@ -253,7 +253,7 @@ class _TransactionCard extends StatelessWidget {
                       const Text('Total Poin '),
                       const Icon(Icons.star, color: Colors.amber, size: 16),
                       Text(
-                        ' ${order.estimatedPoints}',
+                        ' ${order.totalPoints}',
                         style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E824C)),
                       ),
                     ],

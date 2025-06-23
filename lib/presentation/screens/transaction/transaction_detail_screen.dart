@@ -53,7 +53,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         // Panggil fungsi baru yang sudah menangani poin dan bonus
         await FirestoreService.completeTransactionAndAddPoints(
           userId: widget.order.userId,
-          basePoints: widget.order.estimatedPoints,
+          basePoints: widget.order.totalPoints,
           orderId: widget.order.id,
         );
       } else {
@@ -186,7 +186,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                 item.displayName, 'x${item.quantity}')),
             const Divider(height: 24),
             _buildDetailRow('Total Item', '$totalItems', isBold: true),
-            _buildDetailRow('Estimasi Poin', '+${widget.order.estimatedPoints}', isBold: true, valueColor: Colors.green),
+            _buildDetailRow('Estimasi Poin', '+${widget.order.totalPoints}', isBold: true, valueColor: Colors.green),
           ],
         ),
       ),
