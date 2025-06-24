@@ -53,6 +53,7 @@ class DefaultFirebaseOptions {
     projectId: 'cemungut-app',
     authDomain: 'cemungut-app.firebaseapp.com',
     storageBucket: 'cemungut-app.firebasestorage.app',
+    measurementId: 'G-3RPKD7QQ8X',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -71,4 +72,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'cemungut-app.firebasestorage.app',
     iosBundleId: 'com.cemungut.cemungutApp',
   );
+
 }
