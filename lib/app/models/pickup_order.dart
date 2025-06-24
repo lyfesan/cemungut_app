@@ -17,10 +17,13 @@ class PickupOrder {
   final String userId;
   final String userName; // Untuk kemudahan display
   final String address;
+  final GeoPoint pickupLocation;
   final List<WasteItem> items;
   final Timestamp pickupTime;
   final PickupStatus status;
-  final int estimatedPoints;
+  final int basePoints; // Ganti nama dari estimatedPoints
+  final int bonusPoints;
+  final int totalPoints;
   final String? orderNote;
   final Timestamp createdAt;
   final Timestamp updatedAt;
@@ -30,10 +33,13 @@ class PickupOrder {
     required this.userId,
     required this.userName,
     required this.address,
+    required this.pickupLocation,
     required this.items,
     required this.pickupTime,
     required this.status,
-    required this.estimatedPoints,
+    required this.basePoints,
+    required this.bonusPoints,
+    required this.totalPoints,
     this.orderNote,
     required this.createdAt,
     required this.updatedAt,
@@ -46,11 +52,14 @@ class PickupOrder {
       'userId': userId,
       'userName': userName,
       'address': address,
+      'pickupLocation': pickupLocation,
       // Konversi setiap WasteItem di list menjadi Map
       'items': items.map((item) => item.toJson()).toList(),
       'pickupTime': pickupTime,
       'status': status.name, // Simpan status sebagai String
-      'estimatedPoints': estimatedPoints,
+      'basePoints': basePoints,
+      'bonusPoints': bonusPoints,
+      'totalPoints': totalPoints,
       'orderNote': orderNote,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -74,6 +83,7 @@ class PickupOrder {
       userId: data['userId'] ?? '',
       userName: data['userName'] ?? '',
       address: data['address'] ?? 'Alamat tidak tersedia',
+      pickupLocation: data['pickupLocation'] ?? const GeoPoint(0,0),
       items: itemsList,
       pickupTime: data['pickupTime'] ?? Timestamp.now(),
       // Ambil status dari string, default ke pending jika tidak ada/salah
@@ -81,7 +91,9 @@ class PickupOrder {
             (e) => e.name == data['status'],
         orElse: () => PickupStatus.pending,
       ),
-      estimatedPoints: data['estimatedPoints'] ?? 0,
+      basePoints: data['basePoints'] ?? 0,
+      bonusPoints: data['bonusPoints'] ?? 0,
+      totalPoints: data['totalPoints'] ?? (data['estimatedPoints'] ?? 0),
       orderNote: data['orderNote'],
       createdAt: data['createdAt'] ?? Timestamp.now(),
       updatedAt: data['updatedAt'] ?? Timestamp.now(),

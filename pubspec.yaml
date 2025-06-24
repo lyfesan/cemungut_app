@@ -55,6 +55,9 @@ dependencies:
   latlong2: ^0.9.1
   url_launcher: ^6.3.1
   firebase_storage: ^12.4.0
+  showcaseview: ^4.0.1
+  shared_preferences: ^2.5.3
+  geocoding: ^4.0.0
 
 dev_dependencies:
   flutter_test:
@@ -65,11 +68,13 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: 5.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
-
+  image_picker: ^1.1.2
+  tflite_flutter: ^0.11.0
+  image: ^4.2.0
 # The following section is specific to Flutter packages.
 flutter:
 
@@ -80,6 +85,7 @@ flutter:
   assets:
     - assets/
     - assets/icon/
+    - assets/ml/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

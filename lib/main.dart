@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:cemungut_app/app/themes/theme.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 import 'firebase_options.dart';
 
@@ -12,7 +13,25 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('id_ID', null);
-  runApp(const CemungutApp());
+  runApp(ShowCaseWidget(
+    builder: (context) => const CemungutApp(),
+    globalTooltipActions: [
+      TooltipActionButton(
+        //backgroundColor: Colors.transparent,
+        name: "Kembali",
+        type: TooltipDefaultActionType.previous,
+        //padding: EdgeInsets.all(8),
+        textStyle: TextStyle(color: AppTheme.light.colorScheme.onPrimary),
+      ),
+      TooltipActionButton(
+        //backgroundColor: Colors.transparent,
+        name: "Lanjut",
+        type: TooltipDefaultActionType.next,
+        //padding: EdgeInsets.all(8),
+        textStyle: TextStyle(color: AppTheme.light.colorScheme.onPrimary),
+      ),
+    ],
+  ));
 }
 
 class CemungutApp extends StatelessWidget {

@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cemungut_app/app/models/app_user.dart'; // Make sure this path is correct
+import 'package:cemungut_app/app/models/app_user.dart';
+import 'package:cemungut_app/app/models/address.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cemungut_app/app/models/pickup_order.dart';
 import 'package:cemungut_app/app/models/reward_item.dart';
+import 'package:cemungut_app/app/models/quiz_question.dart';
+import 'package:cemungut_app/app/models/education_article.dart';
 
 import '../models/bank_sampah.dart';
 
@@ -14,10 +17,12 @@ class FirestoreService {
   _firestore.collection('users');
 
   static final CollectionReference<Map<String, dynamic>> _wasteBanksCollection =
-  _firestore.collection('wasteBanks'); // Assuming this is your collection name
+  _firestore.collection(
+    'wasteBanks',
+  ); // Assuming this is your collection name
 
-  static final CollectionReference<Map<String, dynamic>> _pickupOrderCollection =
-  _firestore.collection('pickupOrder');
+  static final CollectionReference<Map<String, dynamic>>
+  _pickupOrderCollection = _firestore.collection('pickupOrder');
 
   static final CollectionReference<Map<String, dynamic>> _rewardsCollection =
   _firestore.collection('rewards');
@@ -43,6 +48,7 @@ class FirestoreService {
         phoneNumber: phoneNumber,
         photoUrl: null, // No photo URL at registration
         points: 0,
+        isGoldMember: false,
         createdAt: now,
         updatedAt: now,
       );
@@ -167,7 +173,8 @@ class FirestoreService {
 
   static Future<List<PickupOrder>> getPickupOrdersForUser(String userId) async {
     try {
-      final querySnapshot = await _pickupOrderCollection
+      final querySnapshot =
+      await _pickupOrderCollection
           .where('userId', isEqualTo: userId)
       // Urutkan berdasarkan yang paling baru
           .orderBy('createdAt', descending: true)
@@ -216,24 +223,164 @@ class FirestoreService {
     }
   }
 
-  static Future<void> addPoints({
+  static Future<void> completeTransactionAndAddPoints({
     required String userId,
-    required int pointsToAdd,
+    required int basePoints,
+    required String orderId,
   }) async {
-    // Jika tidak ada poin untuk ditambahkan, tidak perlu melakukan apa-apa
-    if (pointsToAdd <= 0) return;
+    // Jika tidak ada poin, cukup update status pesanan
+    if (basePoints <= 0) {
+      await updatePickupOrderStatus(orderId: orderId, status: PickupStatus.completed);
+      return;
+    }
 
-    try {
-      final userRef = _usersCollection.doc(userId);
-      await userRef.update({
+    final userRef = _usersCollection.doc(userId);
+
+    // Gunakan transaction untuk memastikan operasi aman
+    await _firestore.runTransaction((transaction) async {
+      final userSnapshot = await transaction.get(userRef);
+      if (!userSnapshot.exists) {
+        throw Exception("User does not exist!");
+      }
+
+      final userData = AppUser.fromFirestore(userSnapshot as DocumentSnapshot<Map<String, dynamic>>);
+      int pointsToAdd = basePoints;
+
+      // 1. Cek apakah user sudah Gold Member, jika ya, tambahkan bonus 3%
+      if (userData.isGoldMember) {
+        pointsToAdd = (basePoints * 1.03).round();
+      }
+
+      final int newTotalPoints = userData.points + pointsToAdd;
+      bool shouldBecomeGold = false;
+
+      // 2. Cek apakah user akan menjadi Gold Member setelah transaksi ini
+      // Hanya cek jika user BELUM menjadi Gold Member
+      if (!userData.isGoldMember && newTotalPoints >= 350) { // Goal Point = 350
+        shouldBecomeGold = true;
+      }
+
+      // Siapkan data untuk di-update
+      final Map<String, dynamic> updates = {
         'points': FieldValue.increment(pointsToAdd),
         'updatedAt': Timestamp.now(),
+      };
+
+      if (shouldBecomeGold) {
+        updates['isGoldMember'] = true;
+      }
+
+      // 3. Update data user
+      transaction.update(userRef, updates);
+
+      // 4. Update status pesanan
+      final orderRef = _pickupOrderCollection.doc(orderId);
+      transaction.update(orderRef, {
+        'status': PickupStatus.completed.name,
+        'updatedAt': Timestamp.now(),
       });
+    });
+  }
+
+  static Future<List<QuizQuestion>> getQuizQuestions({int limit = 10}) async {
+    try {
+      // Ambil SEMUA dokumen dulu karena Firestore tidak bisa .shuffle() secara native
+      QuerySnapshot snapshot =
+      await _firestore
+          .collection('quiz_questions')
+          .get(); // <-- Menggunakan _firestore
+
+      if (snapshot.docs.isEmpty) {
+        return [];
+      }
+
+      final docs = snapshot.docs;
+      docs.shuffle(); // Acak urutan semua dokumen
+
+      // Ambil sejumlah 'limit' dari daftar yang sudah diacak
+      final limitedDocs = docs.take(limit);
+
+      return limitedDocs.map((doc) {
+        return QuizQuestion.fromFirestore(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        );
+      }).toList();
     } catch (e) {
       if (kDebugMode) {
-        print('Error adding points: $e');
+        // <-- Menggunakan kDebugMode
+        print("Error getting quiz questions: $e");
       }
-      rethrow;
+      return [];
     }
   }
+
+  static Future<List<EducationArticle>> getEducationArticles() async {
+    try {
+      final snapshot =
+      await _firestore
+          .collection('articles')
+          .orderBy(
+        'createdAt',
+        descending: true,
+      ) // Urutkan berdasarkan yang terbaru
+          .get();
+
+      return snapshot.docs
+          .map((doc) => EducationArticle.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching education articles: $e');
+      }
+      // Return an empty list on error to prevent the UI from crashing
+      return [];
+    }
+  }
+
+  static CollectionReference<Address> _addressesRef(String userId) {
+    return _firestore.collection('users').doc(userId).collection('addresses').withConverter<Address>(
+      fromFirestore: (snapshot, _) => Address.fromSnapshot(snapshot),
+      toFirestore: (address, _) => address.toJson(),
+    );
+  }
+
+  static Stream<List<Address>> getAddresses(String userId) {
+    return _addressesRef(userId).snapshots().map(
+          (snapshot) => snapshot.docs.map((doc) => doc.data()).toList(),
+    );
+  }
+
+  // Mengambil satu alamat default (atau yang pertama)
+  static Future<Address?> getFirstAddress(String userId) async {
+    final snapshot = await _addressesRef(userId).limit(1).get();
+    if (snapshot.docs.isNotEmpty) {
+      return snapshot.docs.first.data();
+    }
+    return null;
+  }
+
+  // Menambah alamat baru
+  static Future<void> addAddress(String userId, Address address) {
+    final newDocRef = _addressesRef(userId).doc();
+    // Kita buat Address baru dengan ID dari dokumen yang baru dibuat
+    final addressWithId = Address(
+        id: newDocRef.id,
+        name: address.name,
+        addressDetail: address.addressDetail,
+        note: address.note,
+        location: address.location);
+    return newDocRef.set(addressWithId);
+  }
+
+  // Mengupdate alamat
+  static Future<void> updateAddress(String userId, Address address) {
+    return _addressesRef(userId).doc(address.id).update(address.toJson());
+  }
+
+  // Menghapus alamat
+  static Future<void> deleteAddress(String userId, String addressId) {
+    return _addressesRef(userId).doc(addressId).delete();
+  }
+
 }

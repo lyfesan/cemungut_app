@@ -7,6 +7,7 @@ class AppUser {
   final String phoneNumber; // Can be null
   final String? photoUrl;    // Can be null
   final int points;
+  final bool isGoldMember;
   final Timestamp createdAt;
   final Timestamp updatedAt;
 
@@ -17,6 +18,7 @@ class AppUser {
     required this.phoneNumber,
     this.photoUrl,
     required this.points,
+    this.isGoldMember = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -31,6 +33,7 @@ class AppUser {
       'phoneNumber': phoneNumber,
       'photoUrl': photoUrl,
       'points': points,
+      'isGoldMember': isGoldMember,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
 
@@ -53,6 +56,7 @@ class AppUser {
       phoneNumber: data['phoneNumber'], // Will be null if not present
       photoUrl: data['photoUrl'],       // Will be null if not present
       points: data['points'] ?? 0,
+      isGoldMember: data['isGoldMember'] ?? false,
       createdAt: data['createdAt'] ?? Timestamp.now(),
       updatedAt: data['updatedAt'] ?? Timestamp.now(),
     );

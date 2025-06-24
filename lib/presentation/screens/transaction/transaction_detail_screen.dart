@@ -50,9 +50,17 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
 
       // 2. Jika statusnya 'Selesai', tambahkan poin ke user
       if (newStatus == PickupStatus.completed) {
-        await FirestoreService.addPoints(
+        // Panggil fungsi baru yang sudah menangani poin dan bonus
+        await FirestoreService.completeTransactionAndAddPoints(
           userId: widget.order.userId,
-          pointsToAdd: widget.order.estimatedPoints,
+          basePoints: widget.order.totalPoints,
+          orderId: widget.order.id,
+        );
+      } else {
+        // Jika hanya membatalkan, panggil fungsi update status biasa
+        await FirestoreService.updatePickupOrderStatus(
+          orderId: widget.order.id,
+          status: newStatus,
         );
       }
 
@@ -178,7 +186,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                 item.displayName, 'x${item.quantity}')),
             const Divider(height: 24),
             _buildDetailRow('Total Item', '$totalItems', isBold: true),
-            _buildDetailRow('Estimasi Poin', '+${widget.order.estimatedPoints}', isBold: true, valueColor: Colors.green),
+            _buildDetailRow('Estimasi Poin', '+${widget.order.totalPoints}', isBold: true, valueColor: Colors.green),
           ],
         ),
       ),
