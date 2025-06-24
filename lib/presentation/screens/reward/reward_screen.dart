@@ -1,7 +1,6 @@
 // lib/app/presentation/screens/reward/reward_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cemungut_app/app/models/app_user.dart';
 import 'package:cemungut_app/app/models/reward_item.dart';
 import 'package:cemungut_app/app/services/firestore_service.dart';
@@ -156,7 +155,7 @@ class _RewardScreenState extends State<RewardScreen> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-            'Rewards',
+            'Hadiah',
             style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -214,50 +213,105 @@ class _RewardScreenState extends State<RewardScreen> {
   }
 
   Widget _buildPointsHeader(AppUser? user) {
-    final int points = user?.points ?? 0;
-    const int goalPoints = 350; // Contoh
-    final double progress = (points / goalPoints).clamp(0.0, 1.0);
 
+    if (user == null) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('Login untuk melihat poin dan hadiah.'),
+          ),
+        ),
+      );
+    }
+    const int goalPoints = 350; // Definisikan goal point
+    final theme = Theme.of(context);
+    Widget topContent;
+    // Widget untuk bagian bawah kartu (bonus)
+    Widget bottomContent;
+    if (user.isGoldMember) {
+      // --- TAMPILAN JIKA SUDAH GOLD MEMBER ---
+      topContent = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.shield, color: Colors.amber[700], size: 28),
+              const SizedBox(width: 8),
+              Text('Anda adalah Gold Member!',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold, color: Colors.white)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.white.withOpacity(0.2),
+                radius: 16,
+                child: Image.asset(
+                  'assets/Coin.png', // Sesuaikan path asset
+                  height: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text('Total Poin Anda: ${user.points}',
+                  style: const TextStyle(color: Colors.white70)),
+            ],
+          ),
+        ],
+      );
+      bottomContent = Text('Nikmati bonus 3% poin di setiap transaksi!',
+          style: theme.textTheme.bodyMedium
+              ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white));
+
+    } else {
+      // --- TAMPILAN JIKA BELUM GOLD MEMBER ---
+      final pointsToGoal = (goalPoints - user.points).clamp(0, goalPoints);
+      final double progress = (user.points / goalPoints).clamp(0.0, 1.0);
+      topContent = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$pointsToGoal CemPoin menuju Gold',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+              Text('${user.points} / $goalPoints',
+                  style: const TextStyle(color: Colors.white70)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.white.withOpacity(0.3),
+            color: Colors.white,
+            minHeight: 10,
+            borderRadius: BorderRadius.circular(5),
+          ),
+        ],
+      );
+      bottomContent = Text('Dapatkan bonus setelah menjadi Gold Member',
+          style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70));
+    }
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Card(
-        color: const Color(0xFF1E824C),
+        color: theme.colorScheme.primary, // Gunakan warna primer tema
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child:
-                          Image.asset(
-                            'assets/Coin.png', // Ganti dengan path asset kamu
-                            fit: BoxFit.contain,
-                          ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text('$points Poin', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const Icon(Icons.emoji_events, color: Colors.white, size: 32),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text('${goalPoints - points} CemPoin menuju Gold', style: const TextStyle(color: Colors.white70)),
-              const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: progress,
-                backgroundColor: Colors.white.withOpacity(0.3),
-                color: Colors.white,
-              ),
+              topContent,
+              const Divider(height: 24, color: Colors.white30),
+              const Text('Keuntungan Anda:',
+                  style: TextStyle(color: Colors.white70)),
               const SizedBox(height: 4),
-              Text('$points / $goalPoints', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              bottomContent,
             ],
           ),
         ),

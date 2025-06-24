@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:cemungut_app/app/models/pickup_order.dart';
 import 'package:cemungut_app/app/services/firestore_service.dart';
 import 'package:cemungut_app/app/models/waste_item.dart';
-import 'transaction_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class TransactionDetailScreen extends StatefulWidget {
   final PickupOrder order;
@@ -81,6 +83,20 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     }
   }
 
+  Future<void> _openMap(double latitude, double longitude) async {
+    final Uri googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$latitude,$longitude');
+    if (await canLaunchUrl(googleMapsUrl)) {
+      await launchUrl(googleMapsUrl);
+    } else {
+      // Tampilkan pesan error jika tidak bisa membuka Google Maps
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak dapat membuka aplikasi peta.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,6 +116,11 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   _buildDetailRow('Status', widget.order.status.name, status: widget.order.status),
                 ]),
                 const SizedBox(height: 20),
+                // --- TAMBAHKAN KARTU ALAMAT DI SINI ---
+                _buildSectionTitle('Lokasi Penjemputan'),
+                _buildAddressCard(widget.order.address, widget.order.pickupLocation),
+                const SizedBox(height: 20),
+                // --- END ---
                 _buildSectionTitle('Rincian Sampah'),
                 _buildItemsCard(widget.order.items),
                 if (widget.order.orderNote != null && widget.order.orderNote!.isNotEmpty) ...[
@@ -108,7 +129,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   _buildInfoCard([
                     Text(widget.order.orderNote!, style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic))
                   ]),
-                ]
+                ],
+                const SizedBox(height: 20), // Beri spasi tambahan di bawah
               ],
             ),
           ),
@@ -215,7 +237,55 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       ),
     );
   }
+
+  Widget _buildAddressCard(String address, GeoPoint location) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined, color: Colors.black54),
+                const SizedBox(width: 8),
+                Text(
+                  'Alamat Penjemputan',
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              address,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const Divider(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.map_outlined),
+                label: const Text('Buka di Peta'),
+                onPressed: () => _openMap(location.latitude, location.longitude),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).primaryColor,
+                  side: BorderSide(color: Theme.of(context).primaryColor),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
+
 
 class _StatusChip extends StatelessWidget {
   final PickupStatus status;
