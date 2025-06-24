@@ -2,10 +2,16 @@ plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
     // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+dependencies {
+    implementation("org.tensorflow:tensorflow-lite:2.12.0")
+    implementation("org.tensorflow:tensorflow-lite-gpu:2.12.0")
 }
 
 android {
@@ -31,6 +37,12 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+//        ndk {
+//            // Memaksa penyertaan library untuk arsitektur CPU yang paling umum
+//            abiFilters.add("armeabi-v7a")
+//            abiFilters.add("arm64-v8a")
+//            abiFilters.add("x86_64")
+//        }
     }
 
     buildTypes {
@@ -38,6 +50,12 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles (
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+           )
         }
     }
 }
