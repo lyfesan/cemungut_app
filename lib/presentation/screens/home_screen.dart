@@ -10,6 +10,8 @@ import '../../app/services/firebase_auth_service.dart';
 import '../../app/services/firestore_service.dart';
 import 'bank_sampah/bank_sampah_screen.dart';
 import 'package:cemungut_app/presentation/screens/order_pickup/waste_cart_screen.dart';
+import 'package:cemungut_app/app/models/address.dart';
+import 'package:cemungut_app/presentation/screens/order_pickup/select_address_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   // 1. Accept the new keys
@@ -34,6 +36,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final NavigationController navController = Get.find();
+  Address? _selectedAddress;
+  bool _isAddressLoading = true;
+  @override
+  void initState() {
+    super.initState();
+    _fetchInitialAddress(); // <-- PANGGIL FUNGSI UNTUK AMBIL ALAMAT
+  }
 
   Future<void> _signOut() async {
     // ... (sign out logic remains the same)
@@ -59,6 +68,48 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (shouldLogout == true) {
       await FirebaseAuthService.signOut();
+    }
+  }
+
+  // Di dalam class _HomeScreenState
+
+// --- FUNGSI BARU UNTUK MENGAMBIL ALAMAT AWAL ---
+  Future<void> _fetchInitialAddress() async {
+    // Pastikan widget masih ada di tree sebelum set state
+    if (!mounted) return;
+
+    setState(() {
+      _isAddressLoading = true;
+    });
+
+    final userId = FirebaseAuthService.currentUser?.uid;
+    if (userId == null) {
+      if (mounted) {
+        setState(() => _isAddressLoading = false);
+      }
+      return;
+    }
+
+    final firstAddress = await FirestoreService.getFirstAddress(userId);
+    if (mounted) {
+      setState(() {
+        _selectedAddress = firstAddress;
+        _isAddressLoading = false;
+      });
+    }
+  }
+
+// --- FUNGSI BARU UNTUK NAVIGASI KE PILIH ALAMAT ---
+  Future<void> _changeAddress() async {
+    final result = await Navigator.of(context).push<Address>(
+      MaterialPageRoute(builder: (context) => const SelectAddressScreen()),
+    );
+
+    // Jika user memilih alamat dari layar `SelectAddressScreen`
+    if (result != null && mounted) {
+      setState(() {
+        _selectedAddress = result;
+      });
     }
   }
 
@@ -172,30 +223,74 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLocationCard(BuildContext context) {
-    // ... This method remains the same ...
+    Widget content;
+
+    if (_isAddressLoading) {
+      // --- TAMPILAN SAAT LOADING ---
+      content = const Row(
+        children: [
+          CircularProgressIndicator(strokeWidth: 2),
+          SizedBox(width: 16),
+          Text('Memuat alamat...'),
+        ],
+      );
+    } else if (_selectedAddress == null) {
+      // --- TAMPILAN JIKA TIDAK ADA ALAMAT TERSIMPAN ---
+      content = Row(
+        children: [
+          Icon(Icons.add_location_alt_outlined,
+              color: Theme.of(context).primaryColor, size: 32),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Lokasi penjemputan', style: TextStyle(color: Colors.grey)),
+                Text('Pilih atau tambah alamat',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          const Icon(Icons.keyboard_arrow_right, color: Colors.grey),
+        ],
+      );
+    } else {
+      // --- TAMPILAN JIKA ALAMAT SUDAH ADA ---
+      content = Row(
+        children: [
+          Icon(Icons.location_on,
+              color: Theme.of(context).primaryColor, size: 32),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_selectedAddress!.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  _selectedAddress!.addressDetail,
+                  style: const TextStyle(color: Colors.grey),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+        ],
+      );
+    }
+
     return Card(
       elevation: 2,
       shadowColor: Colors.black12,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            Icon(Icons.location_on,
-                color: Theme.of(context).primaryColor, size: 32),
-            const SizedBox(width: 12),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Lokasi penjemputan', style: TextStyle(color: Colors.grey)),
-                Text('Rumah Tung Tung Sahur',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const Spacer(),
-            const Text('Ubah alamat', style: TextStyle(color: Colors.grey)),
-            const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-          ],
+      child: InkWell(
+        onTap: _changeAddress, // <-- PANGGIL FUNGSI UBAH ALAMAT
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: content,
         ),
       ),
     );
