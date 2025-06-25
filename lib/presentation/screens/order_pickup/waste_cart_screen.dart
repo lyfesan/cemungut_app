@@ -65,7 +65,9 @@ class _WasteCartScreenState extends State<WasteCartScreen> {
       ),
       body: _wasteItems.isEmpty
           ? const Center(
-        // ... (Tampilan saat kosong tetap sama)
+          child: Text(
+              "Silahkan tambahkan item terlebih dahulu"
+          ),
       )
           : ListView.builder(
         padding: const EdgeInsets.all(16.0),

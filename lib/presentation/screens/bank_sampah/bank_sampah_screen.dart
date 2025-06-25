@@ -164,7 +164,7 @@ class _BankSampahScreenState extends State<BankSampahScreen> {
 
   Future<void> _launchMapsUrl(double latitude, double longitude) async {
     final Uri mapsUrl = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=...$latitude,$longitude'
+        'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude'
     );
 
     if (await canLaunchUrl(mapsUrl)) {
