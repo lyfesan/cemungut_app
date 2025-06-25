@@ -9,7 +9,7 @@ class SettingsScreen extends StatelessWidget {
     showAboutDialog(
       context: context,
       applicationName: 'Cemungut',
-      applicationVersion: '1.0.0',
+      applicationVersion: '1.0.1',
       applicationIcon: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Image.asset('assets/icon/app_icon.png', width: 48),
