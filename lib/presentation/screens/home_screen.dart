@@ -313,7 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.symmetric(vertical: 32.0),
           child: Column(
             children: [
-              Icon(Icons.redeem_rounded, color: Colors.white, size: 48),
+              Icon(Icons.delete_outline, color: Colors.white, size: 48),
               SizedBox(height: 8),
               Text('Pesan Penjemputan Sampah',
                   style: TextStyle(
